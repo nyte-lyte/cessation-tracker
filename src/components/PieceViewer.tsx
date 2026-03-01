@@ -231,18 +231,27 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     const YEARS_PER_SEC = 1 / (365 * 24 * 3600);
     let lastT = performance.now() / 1000;
 
-    function resize() {
-      const w = c.clientWidth;
-      const h = c.clientHeight;
-      if (c.width !== w || c.height !== h) {
+    // Cache canvas size — updated only by ResizeObserver, not on every frame
+    let cachedW = c.clientWidth || 1;
+    let cachedH = c.clientHeight || 1;
+    c.width = cachedW;
+    c.height = cachedH;
+
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const w = Math.round(entry.contentRect.width) || 1;
+      const h = Math.round(entry.contentRect.height) || 1;
+      if (w !== cachedW || h !== cachedH) {
+        cachedW = w;
+        cachedH = h;
         c.width = w;
         c.height = h;
       }
-    }
+    });
+    ro.observe(c);
 
     function draw() {
-      resize();
-      gl.viewport(0, 0, c.width, c.height);
+      gl.viewport(0, 0, cachedW, cachedH);
 
       const nowSec = performance.now() / 1000;
       const dt = Math.min(0.1, Math.max(0, nowSec - lastT));
@@ -288,7 +297,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
 
       // Set all uniforms
       if (locs.time)              gl.uniform1f(locs.time, nowSec);
-      if (locs.resolution)        gl.uniform2f(locs.resolution, c.width, c.height);
+      if (locs.resolution)        gl.uniform2f(locs.resolution, cachedW, cachedH);
       if (locs.glucose)           gl.uniform1f(locs.glucose, statics.u_glucose);
       if (locs.potassium)         gl.uniform1f(locs.potassium, statics.u_potassium);
       if (locs.egfr)              gl.uniform1f(locs.egfr, statics.u_eGFR);
@@ -333,6 +342,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      ro.disconnect();
     };
   }, [id, vertexSrc, fragmentSrc]);
 
