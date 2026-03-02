@@ -278,13 +278,11 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const nStr  = 0.35 + 0.20 * clamp(0.58 * (0.5 + 0.5 * Math.sin(phases.N)), 0, 1);
       const crStr = 0.30 + 0.20 * clamp((0.4 + 0.3 * pCr) * (0.5 + 0.5 * Math.sin(phases.C)), 0, 1);
       const naAmp = arrNa * (0.08 + 0.12 * pNa);
-      const naStr = clamp(
-        0.14 * (1 - arrNa) + naAmp * (0.25 + 0.75 * Math.exp(-0.5 * Math.pow(((phases.Na % 1) - 0.5) / 0.12, 2))),
-        0, 1
-      );
+      const naArrivedStr = clamp(naAmp * (0.25 + 0.75 * Math.exp(-0.5 * Math.pow(((phases.Na % 1) - 0.5) / 0.12, 2))), 0, 1);
+      const naStr = clamp((0.06 + 0.10 * pNa) + naArrivedStr, 0, 1);
       const clAmp = arrCl * (0.09 + 0.13 * pCl);
       const tri = 1 - Math.abs(2 * (phases.Cl - Math.floor(phases.Cl + 0.5)));
-      const clStr = clamp(0.12 * (1 - arrCl) + clAmp * tri, 0, 1);
+      const clStr = clamp((0.05 + 0.09 * pCl) + clamp(clAmp * tri, 0, 1), 0, 1);
       const co2Str = clamp(0.26 + 0.18 * (1 - pCO2), 0, 0.62);
       const caStr  = clamp(0.06 + 0.08 * (1 - pCO2), 0, 0.30);
 
