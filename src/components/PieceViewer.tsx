@@ -231,16 +231,17 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     const YEARS_PER_SEC = 1 / (365 * 24 * 3600);
     let lastT = performance.now() / 1000;
 
-    // Cache canvas size — updated only by ResizeObserver, not on every frame
-    let cachedW = c.clientWidth || 1;
-    let cachedH = c.clientHeight || 1;
+    // Cache canvas size in physical pixels — updated only by ResizeObserver, not on every frame
+    const dpr = () => window.devicePixelRatio || 1;
+    let cachedW = Math.round((c.clientWidth || 1) * dpr());
+    let cachedH = Math.round((c.clientHeight || 1) * dpr());
     c.width = cachedW;
     c.height = cachedH;
 
     const ro = new ResizeObserver((entries) => {
       const entry = entries[0];
-      const w = Math.round(entry.contentRect.width) || 1;
-      const h = Math.round(entry.contentRect.height) || 1;
+      const w = Math.round(entry.contentRect.width * dpr()) || 1;
+      const h = Math.round(entry.contentRect.height * dpr()) || 1;
       if (w !== cachedW || h !== cachedH) {
         cachedW = w;
         cachedH = h;
