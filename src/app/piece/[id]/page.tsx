@@ -53,7 +53,7 @@ export default async function PiecePage({
       }}
     >
       {/* Canvas */}
-      <div style={{ background: "#000", position: "relative" }}>
+      <div style={{ background: "#000", position: "relative", padding: "48px" }}>
         <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} />
       </div>
 
