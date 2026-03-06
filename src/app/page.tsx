@@ -20,9 +20,7 @@ export default function Home() {
           CESSATION — {pieces.length} PIECES
         </h1>
         <p style={{ color: "var(--muted)", margin: 0, maxWidth: "480px" }}>
-          Generative art derived from personal health data, 2018–2025.
-          Each piece encodes ECG and metabolic lab readings from a single
-          clinical visit. Minting on Bitcoin / Ordinals.
+          A generative art project using personal health data to reach digital nirvana.
         </p>
       </div>
 

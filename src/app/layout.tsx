@@ -12,7 +12,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "cessation",
   description:
-    "A generative art collection on Bitcoin. 29 pieces derived from health data spanning 2018–2025.",
+    "A generative art project using personal health data to reach digital nirvana.",
 };
 
 export default function RootLayout({
