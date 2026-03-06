@@ -348,7 +348,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
   return (
     <canvas
       ref={canvasRef}
-      style={{ width: "100%", height: "100%", display: "block" }}
+      style={{ display: "block", aspectRatio: "1", maxWidth: "100%", maxHeight: "100%" }}
     />
   );
 }

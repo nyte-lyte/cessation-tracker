@@ -49,11 +49,11 @@ export default async function PiecePage({
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 300px",
-        minHeight: "calc(100vh - 49px)",
+        height: "calc(100vh - 49px)",
       }}
     >
       {/* Canvas */}
-      <div style={{ background: "#000", position: "relative", padding: "48px" }}>
+      <div style={{ background: "#000", padding: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} />
       </div>
 
