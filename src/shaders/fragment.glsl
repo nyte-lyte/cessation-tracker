@@ -93,7 +93,11 @@ float ellipseDist(vec2 p, vec2 center, float aspect, float angle){
 }
 
 void main(){
-    // Grain scales with QRS-T dissonance: aligned repolarization = smooth, discordant = textured
+    // Aspect-correct UV: keeps the square composition centered and undistorted.
+    // On a 3:2 canvas the sides show extended background fields — no stretching.
+    float aspect = u_resolution.x / u_resolution.y;
+    vec2 uv = vec2((v_uv.x - 0.5) * aspect + 0.5, v_uv.y);
+
     float n = 0.0;
     float t = u_totalYears;
 
@@ -131,10 +135,10 @@ void main(){
     // --- Per-field sigma from health data ---
     // eGFR (kidney function) determines spread: high eGFR = wide diffuse zones,
     // low eGFR = tight concentrated pools. Each field responds to a different axis.
-    float s1 = 0.09 + 0.20 * u_eGFR;          // identity field: kidney health = spread
-    float s2 = 0.10 + 0.16 * (1.0 - u_eGFR);  // acid-base field: inverted kidney
-    float s3 = 0.08 + 0.18 * u_glucose;         // electrolyte field: energy level = spread
-    float s4 = 0.10 + 0.14 * u_eGFR;            // lineage field: kidney health drives spread
+    float s1 = (0.09 + 0.20 * u_eGFR)         * 0.75;
+    float s2 = (0.10 + 0.16 * (1.0 - u_eGFR)) * 0.75;
+    float s3 = (0.08 + 0.18 * u_glucose)       * 0.75;
+    float s4 = (0.10 + 0.14 * u_eGFR)         * 0.75;
 
     // --- ECG-driven drift frequencies ---
     // The heart's electrical timing becomes the movement tempo of each field.
@@ -169,16 +173,16 @@ void main(){
                                   sin(t * freqD * 0.88 + 3.1416 * u_rAxisNorm));
 
     // Gaussian weights: per-field sigma makes each zone uniquely sized
-    float w1 = exp(-dot(v_uv - cf1, v_uv - cf1) / s1);
-    float w2 = exp(-dot(v_uv - cf2, v_uv - cf2) / s2);
-    float w3 = exp(-dot(v_uv - cf3, v_uv - cf3) / s3);
-    float w4 = exp(-dot(v_uv - cf4, v_uv - cf4) / s4) * u_inheritedStrength;
+    float w1 = exp(-dot(uv - cf1, uv - cf1) / s1); w1 *= w1;
+    float w2 = exp(-dot(uv - cf2, uv - cf2) / s2); w2 *= w2;
+    float w3 = exp(-dot(uv - cf3, uv - cf3) / s3); w3 *= w3;
+    float w4 = exp(-dot(uv - cf4, uv - cf4) / s4) * u_inheritedStrength; w4 *= w4;
     float wSum = w1 + w2 + w3 + w4 + 1e-6;
 
     // Field colors: metabolic values drive hue, sat, bri; hue drifts slowly over years
     vec3 col1 = hsb2rgb(mod(u_glucose * 360. + hDrift1, 360.), 0.55 + 0.35 * u_potassium, 0.35 + 0.55 * u_eGFR);
-    vec3 col2 = hsb2rgb(mod(u_co2HueDeg      + hDrift2, 360.), 0.55,                      0.50 + 0.30 * u_eGFR);
-    vec3 col3 = hsb2rgb(mod(u_calciumHueDeg  + hDrift3, 360.), 0.62,                      0.48 + 0.30 * u_eGFR);
+    vec3 col2 = hsb2rgb(mod(u_eGFR    * 360.  + hDrift2, 360.), 0.55,                      0.50 + 0.30 * u_eGFR);
+    vec3 col3 = hsb2rgb(mod(u_qtcNorm * 360.  + hDrift3, 360.), 0.62,                      0.48 + 0.30 * u_eGFR);
     vec3 col4 = hsb2rgb(u_inheritedHueDeg, 0.58, 0.52 + 0.28 * u_eGFR);
 
     vec3 rgbColor = (w1 * col1 + w2 * col2 + w3 * col3 + w4 * col4) / wSum;
@@ -249,53 +253,83 @@ float caOuter1 = 0.36 + 0.20 * u_calciumRadius;
 float caInner2 = 0.15 + 0.14 * u_calciumRadius;
 float caOuter2 = 0.30 + 0.18 * u_calciumRadius;
 
-// Blob positions: original pS/rS composition restored.
-// Drift uses u_time (wall-clock seconds) for visible realtime movement.
+// Blob positions: lava lamp style.
+// Each blob floats on two superimposed sine orbits with incommensurate frequencies —
+// the path never exactly repeats within a human lifespan. ECG values seed the phases
+// so each dataset traces a genuinely unique trajectory. driftMul grows 0.5→1.3
+// with age so orbits expand as the piece progresses. Small u_time term adds
+// realtime breathing on top of the slow year-drift.
 
-// Nitrogen: pAxis drives position
-vec2 cN = vec2(0.35 + 0.35 * pS, 0.45 + 0.30 * rS);
-cN += 0.05 * vec2(
-    sin(u_time * 0.018 + 6.2831 * u_pAxisNorm),
-    cos(u_time * 0.014 + 6.2831 * u_rAxisNorm)
-);
+// Nitrogen: heavy, wandering — pAxis/rAxis/qtcNorm/tAxisNorm seeds
+vec2 cN = vec2(0.50, 0.50)
+    + 0.20 * driftMul * vec2(sin(t * 0.028 + 6.2831 * u_pAxisNorm),
+                              cos(t * 0.019 + 6.2831 * u_rAxisNorm))
+    + 0.09 * driftMul * vec2(sin(t * 0.071 + 6.2831 * u_qtcNorm),
+                              cos(t * 0.053 + 6.2831 * u_tAxisNorm))
+    + 0.04 * vec2(sin(u_time * 0.014 + 6.2831 * u_pAxisNorm),
+                  cos(u_time * 0.011 + 6.2831 * u_rAxisNorm));
 
-// Creatinine: pAxis inverted, mirrors Nitrogen
-vec2 cC1 = vec2(0.65 - 0.30 * pS, 0.55 + 0.25 * rS)
-    + 0.04 * vec2(sin(u_time * 0.022 + 6.2831 * (1.0 - u_pAxisNorm)),
-                  cos(u_time * 0.019 + 6.2831 * u_rAxisNorm));
-vec2 cC2 = vec2(0.50 + 0.25 * pS, 0.28 - 0.25 * rS)
-    + 0.03 * vec2(sin(u_time * 0.016 + 6.2831 * u_pAxisNorm),
-                  cos(u_time * 0.013 + 6.2831 * (1.0 - u_rAxisNorm)));
+// Creatinine lobe 1: inverted pAxis phases from Nitrogen — tends toward opposite side
+vec2 cC1 = vec2(0.50, 0.50)
+    + 0.18 * driftMul * vec2(sin(t * 0.033 + 6.2831 * (1.0 - u_pAxisNorm)),
+                              cos(t * 0.021 + 6.2831 * u_rAxisNorm))
+    + 0.08 * driftMul * vec2(sin(t * 0.061 + 6.2831 * (1.0 - u_qtcNorm)),
+                              cos(t * 0.047 + 6.2831 * u_prNorm))
+    + 0.04 * vec2(sin(u_time * 0.018 + 6.2831 * (1.0 - u_pAxisNorm)),
+                  cos(u_time * 0.015 + 6.2831 * u_rAxisNorm));
 
-// BUN/Creatinine ratio coupling: elevated ratio (pre-renal) pulls both markers together,
-// creating overlap and a brighter combined region. Normal ratio keeps them independent.
-float pull = u_bunCreatRatioNorm * 0.10;
+// Creatinine lobe 2: quarter-phase offset from lobe 1 — satellite companion
+vec2 cC2 = vec2(0.50, 0.50)
+    + 0.15 * driftMul * vec2(sin(t * 0.033 + 6.2831 * (1.0 - u_pAxisNorm) + 1.571),
+                              cos(t * 0.021 + 6.2831 * u_rAxisNorm + 1.571))
+    + 0.07 * driftMul * vec2(sin(t * 0.061 + 6.2831 * u_pAxisNorm),
+                              cos(t * 0.047 + 6.2831 * (1.0 - u_rAxisNorm)))
+    + 0.03 * vec2(sin(u_time * 0.013 + 6.2831 * u_pAxisNorm),
+                  cos(u_time * 0.010 + 6.2831 * (1.0 - u_rAxisNorm)));
+
+// BUN/Creatinine ratio coupling: elevated ratio (pre-renal) pulls kidney blobs together.
+float pull = u_bunCreatRatioNorm * 0.12;
 vec2 pullVec = cC1 - cN;
 vec2 pullDir = pullVec / max(length(pullVec), 0.001);
 cN  += pullDir * pull;
 cC1 -= pullDir * pull * 0.5;
 
-float mN  = 1.0 - smoothstep(nInner,  nOuter,  ellipseDist(v_uv, cN,  nAspect,  nAngle));
-float mC1 = 1.0 - smoothstep(cInner1, cOuter1, ellipseDist(v_uv, cC1, crAspect, crAngle));
-float mC2 = 1.0 - smoothstep(cInner2, cOuter2, ellipseDist(v_uv, cC2, crAspect * 0.85, crAngle));
+float mN  = 1.0 - smoothstep(nInner,  nOuter,  ellipseDist(uv, cN,  nAspect,  nAngle));
+float mC1 = 1.0 - smoothstep(cInner1, cOuter1, ellipseDist(uv, cC1, crAspect, crAngle));
+float mC2 = 1.0 - smoothstep(cInner2, cOuter2, ellipseDist(uv, cC2, crAspect * 0.85, crAngle));
 float mC  = max(mC1, mC2);
 
-// Sodium: rAxis primary, pAxis secondary (axes swapped from Nitrogen)
-vec2 cA = vec2(0.28 + 0.32 * rS, 0.62 + 0.28 * pS)
-    + 0.04 * vec2(cos(u_time * 0.020 + 6.2831 * u_rAxisNorm),
-                  sin(u_time * 0.016 + 6.2831 * u_pAxisNorm));
-vec2 cB = vec2(0.62 - 0.28 * rS, 0.32 - 0.28 * pS)
-    + 0.04 * vec2(sin(u_time * 0.013 + 6.2831 * (1.0 - u_rAxisNorm)),
-                  cos(u_time * 0.017 + 6.2831 * (1.0 - u_pAxisNorm)));
+// Sodium lobe A: rAxis/ventRateNorm seeds
+vec2 cA = vec2(0.50, 0.50)
+    + 0.18 * driftMul * vec2(cos(t * 0.024 + 6.2831 * u_rAxisNorm),
+                              sin(t * 0.017 + 6.2831 * u_pAxisNorm))
+    + 0.08 * driftMul * vec2(cos(t * 0.067 + 6.2831 * u_ventRateNorm),
+                              sin(t * 0.043 + 6.2831 * u_qtcNorm))
+    + 0.04 * vec2(cos(u_time * 0.016 + 6.2831 * u_rAxisNorm),
+                  sin(u_time * 0.013 + 6.2831 * u_pAxisNorm));
 
-float mA  = 1. - smoothstep(naInner1, naOuter1, ellipseDist(v_uv, cA, naAspect, naAngle));
-float mB  = 1. - smoothstep(naInner2, naOuter2, ellipseDist(v_uv, cB, naAspect * 0.9, naAngle));
+// Sodium lobe B: inverted phases from A — typically on opposite side of canvas
+vec2 cB = vec2(0.50, 0.50)
+    + 0.16 * driftMul * vec2(cos(t * 0.024 + 6.2831 * (1.0 - u_rAxisNorm)),
+                              sin(t * 0.017 + 6.2831 * (1.0 - u_pAxisNorm)))
+    + 0.07 * driftMul * vec2(cos(t * 0.067 + 6.2831 * (1.0 - u_ventRateNorm)),
+                              sin(t * 0.043 + 6.2831 * (1.0 - u_qtcNorm)))
+    + 0.03 * vec2(sin(u_time * 0.010 + 6.2831 * (1.0 - u_rAxisNorm)),
+                  cos(u_time * 0.014 + 6.2831 * (1.0 - u_pAxisNorm)));
+
+float mA  = 1. - smoothstep(naInner1, naOuter1, ellipseDist(uv, cA, naAspect, naAngle));
+float mB  = 1. - smoothstep(naInner2, naOuter2, ellipseDist(uv, cB, naAspect * 0.9, naAngle));
 float mNa = max(mA, mB);
 
-// Chloride: rAxis drives position
-vec2 cCl = vec2(0.55 + 0.22 * rS + 0.05 * sin(u_time * 0.021 + 6.2831 * u_rAxisNorm),
-               0.45 - 0.20 * pS + 0.04 * cos(u_time * 0.015 + 6.2831 * u_pAxisNorm));
-float mCl = 1.0 - smoothstep(clInner, clOuter, ellipseDist(v_uv, cCl, clAspect, clAngle));
+// Chloride: rAxis/prNorm/tAxisNorm seeds
+vec2 cCl = vec2(0.50, 0.50)
+    + 0.18 * driftMul * vec2(sin(t * 0.031 + 6.2831 * u_rAxisNorm),
+                              cos(t * 0.022 + 6.2831 * u_pAxisNorm))
+    + 0.07 * driftMul * vec2(sin(t * 0.079 + 6.2831 * u_prNorm),
+                              cos(t * 0.057 + 6.2831 * u_tAxisNorm))
+    + 0.04 * vec2(sin(u_time * 0.017 + 6.2831 * u_rAxisNorm),
+                  cos(u_time * 0.012 + 6.2831 * u_pAxisNorm));
+float mCl = 1.0 - smoothstep(clInner, clOuter, ellipseDist(uv, cCl, clAspect, clAngle));
 
 // Chloride strength comes from JS (handles arrival gate + lifespan correctly)
 float strengthCl = u_chlorideStrength;
@@ -304,22 +338,32 @@ float strengthCl = u_chlorideStrength;
 float lum = dot(rgbColor, vec3(.299, .587, .114));
 float edge = length(vec2(dFdx(lum), dFdy(lum)));
 float edgeW = smoothstep(.004, .050, edge);// stronger where colors meet
-float ambW = .88 + .12 * rand(v_uv + vec2(u_pAxisNorm * 6.28, u_rAxisNorm * 4.71));// near-uniform atmospheric presence, slight texture per dataset
+float ambW = .88 + .12 * rand(uv + vec2(u_pAxisNorm * 6.28, u_rAxisNorm * 4.71));// near-uniform atmospheric presence, slight texture per dataset
 // T-axis directional lean: halo is subtly brighter in the repolarization direction
 float tAngle = u_tAxisNorm * 3.14159;
-float tBias = 0.5 + 0.5 * dot(normalize(v_uv - vec2(0.5)), vec2(cos(tAngle), sin(tAngle)));
+float tBias = 0.5 + 0.5 * dot(normalize(uv - vec2(0.5)), vec2(cos(tAngle), sin(tAngle)));
 float localGain = smoothstep(.01, .55, lum);// avoid dark wash
 // QRS-T dissonance shifts halo from diffuse to edge-concentrated: discordant repolarization
 // makes the atmosphere cluster at color boundaries rather than spread uniformly
 float haloW = u_co2Strength * mix(ambW, edgeW, 0.45 + 0.30 * u_qrsTAngle) * localGain * (0.88 + 0.12 * tBias);
 
-// Calcium: pAxis/rAxis, lobes pushed in opposite directions
-vec2 c1 = vec2(0.62 + 0.22 * pS + 0.05 * sin(u_time * 0.011 + 6.2831 * u_pAxisNorm),
-              0.32 + 0.18 * rS  + 0.05 * cos(u_time * 0.009 + 6.2831 * u_rAxisNorm));
-vec2 c2 = vec2(0.32 - 0.18 * rS + 0.06 * cos(u_time * 0.007 + 6.2831 * (1.0 - u_rAxisNorm)),
-              0.65 - 0.22 * pS  + 0.05 * sin(u_time * 0.010 + 6.2831 * (1.0 - u_pAxisNorm)));
-float m1  = 1. - smoothstep(caInner1, caOuter1, ellipseDist(v_uv, c1, caAspect, caAngle));
-float m2  = 1. - smoothstep(caInner2, caOuter2, ellipseDist(v_uv, c2, caAspect * 0.88, caAngle));
+// Calcium: slow, heavy — tAxisNorm/qtcNorm seeds. Lobes orbit with inverted phases.
+vec2 c1 = vec2(0.50, 0.50)
+    + 0.16 * driftMul * vec2(sin(t * 0.022 + 6.2831 * u_pAxisNorm),
+                              cos(t * 0.015 + 6.2831 * u_rAxisNorm))
+    + 0.07 * driftMul * vec2(sin(t * 0.059 + 6.2831 * u_tAxisNorm),
+                              cos(t * 0.041 + 6.2831 * u_qtcNorm))
+    + 0.04 * vec2(sin(u_time * 0.009 + 6.2831 * u_pAxisNorm),
+                  cos(u_time * 0.007 + 6.2831 * u_rAxisNorm));
+vec2 c2 = vec2(0.50, 0.50)
+    + 0.16 * driftMul * vec2(cos(t * 0.022 + 6.2831 * (1.0 - u_rAxisNorm)),
+                              sin(t * 0.015 + 6.2831 * (1.0 - u_pAxisNorm)))
+    + 0.07 * driftMul * vec2(cos(t * 0.059 + 6.2831 * (1.0 - u_tAxisNorm)),
+                              sin(t * 0.041 + 6.2831 * (1.0 - u_qtcNorm)))
+    + 0.04 * vec2(cos(u_time * 0.007 + 6.2831 * (1.0 - u_rAxisNorm)),
+                  sin(u_time * 0.010 + 6.2831 * (1.0 - u_pAxisNorm)));
+float m1  = 1. - smoothstep(caInner1, caOuter1, ellipseDist(uv, c1, caAspect, caAngle));
+float m2  = 1. - smoothstep(caInner2, caOuter2, ellipseDist(uv, c2, caAspect * 0.88, caAngle));
 float mCa = max(m1, m2);
     
     // Nitrogen
