@@ -45,22 +45,49 @@ export default async function PiecePage({
   const fragmentSrc = readFileSync(path.join(shadersDir, "fragment.glsl"), "utf8");
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 300px",
-        height: "calc(100vh - 49px)",
-      }}
-    >
+    <>
+      <style>{`
+        .piece-layout {
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          height: calc(100vh - 49px);
+        }
+        .piece-canvas-wrap {
+          background: #000;
+          padding: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .piece-sidebar {
+          border-left: 1px solid var(--border);
+        }
+        @media (max-width: 600px) {
+          .piece-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            height: auto;
+            min-height: calc(100vh - 49px);
+          }
+          .piece-canvas-wrap {
+            padding: 24px;
+          }
+          .piece-sidebar {
+            border-left: none;
+            border-top: 1px solid var(--border);
+          }
+        }
+      `}</style>
+    <div className="piece-layout">
       {/* Canvas */}
-      <div style={{ background: "#000", padding: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="piece-canvas-wrap">
         <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} />
       </div>
 
       {/* Sidebar */}
       <div
+        className="piece-sidebar"
         style={{
-          borderLeft: "1px solid var(--border)",
           padding: "24px 20px",
           overflowY: "auto",
           display: "flex",
@@ -220,5 +247,6 @@ export default async function PiecePage({
         </div>
       </div>
     </div>
+    </>
   );
 }
