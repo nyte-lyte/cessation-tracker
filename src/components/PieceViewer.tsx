@@ -109,8 +109,10 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       ventRateNorm:      u("u_ventRateNorm"),
       tAxisNorm:         u("u_tAxisNorm"),
       qrsTAngle:         u("u_qrsTAngle"),
-      inheritedHueDeg:   u("u_inheritedHueDeg"),
-      inheritedStrength: u("u_inheritedStrength"),
+      inheritedHueDeg:      u("u_inheritedHueDeg"),
+      inheritedStrength:    u("u_inheritedStrength"),
+      reanimationProgress:  u("u_reanimationProgress"),
+      partnerInheritedHue:  u("u_partnerInheritedHueDeg"),
       nStr:              u("u_nitrogenStrength"),
       nHue:              u("u_nitrogenHueDeg"),
       nR:                u("u_nitrogenRadius"),
@@ -310,8 +312,10 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, ventRateNorm);
       if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, tAxisNorm);
       if (locs.qrsTAngle)         gl.uniform1f(locs.qrsTAngle, qrsTAngle);
-      if (locs.inheritedHueDeg)   gl.uniform1f(locs.inheritedHueDeg, statics.u_inheritedHueDeg);
-      if (locs.inheritedStrength) gl.uniform1f(locs.inheritedStrength, inheritedStrength);
+      if (locs.inheritedHueDeg)     gl.uniform1f(locs.inheritedHueDeg, statics.u_inheritedHueDeg);
+      if (locs.inheritedStrength)   gl.uniform1f(locs.inheritedStrength, inheritedStrength);
+      if (locs.reanimationProgress) gl.uniform1f(locs.reanimationProgress, 0.0);
+      if (locs.partnerInheritedHue) gl.uniform1f(locs.partnerInheritedHue, 0.0);
       if (locs.nStr)   gl.uniform1f(locs.nStr, nStr);
       if (locs.nHue)   gl.uniform1f(locs.nHue, nHue);
       if (locs.nR)     gl.uniform1f(locs.nR, pN);
