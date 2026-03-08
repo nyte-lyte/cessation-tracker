@@ -95,6 +95,35 @@ export default async function PiecePage({
           gap: "24px",
         }}
       >
+        {/* Prev / Next */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          {prev ? (
+            <Link
+              href={`/piece/${prev.id}`}
+              style={{ color: "var(--muted)", fontSize: "11px" }}
+            >
+              ← {String(prev.id).padStart(2, "0")}
+            </Link>
+          ) : (
+            <span />
+          )}
+          {next ? (
+            <Link
+              href={`/piece/${next.id}`}
+              style={{ color: "var(--muted)", fontSize: "11px" }}
+            >
+              {String(next.id).padStart(2, "0")} →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </div>
+
         {/* Piece header */}
         <div>
           <div
@@ -215,36 +244,6 @@ export default async function PiecePage({
           <DataRow label="decay rate" value={piece.decayRate.toExponential(3)} />
         </div>
 
-        {/* Prev / Next */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "auto",
-            paddingTop: "16px",
-          }}
-        >
-          {prev ? (
-            <Link
-              href={`/piece/${prev.id}`}
-              style={{ color: "var(--muted)", fontSize: "11px" }}
-            >
-              ← {String(prev.id).padStart(2, "0")}
-            </Link>
-          ) : (
-            <span />
-          )}
-          {next ? (
-            <Link
-              href={`/piece/${next.id}`}
-              style={{ color: "var(--muted)", fontSize: "11px" }}
-            >
-              {String(next.id).padStart(2, "0")} →
-            </Link>
-          ) : (
-            <span />
-          )}
-        </div>
       </div>
     </div>
     </>
