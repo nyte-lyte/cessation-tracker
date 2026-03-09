@@ -169,7 +169,7 @@ export function computeStaticUniforms(id: number) {
       (Math.abs(ds.ecg.rAxis - ds.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin),
       0, 1
     ),
-    u_inheritedHueDeg: computeHSBFromStats(ds_all[0], ds_all).hue * 360,
+    u_inheritedHueDeg: computeHSBFromStats(ds_all[Math.max(0, id - 1)], ds_all).hue * 360,
     u_inheritedStrength: 1.0,
     u_nitrogenStrength: 0.42,
     u_nitrogenHueDeg: hue * 360,
