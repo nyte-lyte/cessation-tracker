@@ -113,6 +113,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       inheritedStrength:    u("u_inheritedStrength"),
       reanimationProgress:  u("u_reanimationProgress"),
       partnerInheritedHue:  u("u_partnerInheritedHueDeg"),
+      isLiberated:          u("u_isLiberated"),
       nStr:              u("u_nitrogenStrength"),
       nHue:              u("u_nitrogenHueDeg"),
       nR:                u("u_nitrogenRadius"),
@@ -316,6 +317,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.inheritedStrength)   gl.uniform1f(locs.inheritedStrength, inheritedStrength);
       if (locs.reanimationProgress) gl.uniform1f(locs.reanimationProgress, 0.0);
       if (locs.partnerInheritedHue) gl.uniform1f(locs.partnerInheritedHue, 0.0);
+      if (locs.isLiberated)         gl.uniform1f(locs.isLiberated, 0.0);
       if (locs.nStr)   gl.uniform1f(locs.nStr, nStr);
       if (locs.nHue)   gl.uniform1f(locs.nHue, nHue);
       if (locs.nR)     gl.uniform1f(locs.nR, pN);
