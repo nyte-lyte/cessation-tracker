@@ -4,8 +4,6 @@ import Link from "next/link";
 import type { PieceMeta } from "@/lib/pieceUtils";
 
 export default function PieceCard({ piece }: { piece: PieceMeta }) {
-  const year = piece.date.slice(0, 4);
-
   return (
     <Link href={`/piece/${piece.id}`} style={{ display: "block" }}>
       <div
@@ -23,34 +21,13 @@ export default function PieceCard({ piece }: { piece: PieceMeta }) {
           (e.currentTarget.style.borderColor = "var(--border)")
         }
       >
-        {/* Color swatch */}
-        <div
-          style={{
-            height: "4px",
-            background: piece.hex,
-          }}
-        />
-
-        {/* Thumbnail placeholder — replaced by canvas in piece page */}
+        {/* Thumbnail */}
         <div
           style={{
             aspectRatio: "1 / 1",
-            background: `radial-gradient(ellipse at 40% 55%, ${piece.hex}28 0%, #0a0a0a 70%)`,
-            display: "flex",
-            alignItems: "flex-end",
-            padding: "10px 12px",
+            background: `radial-gradient(ellipse at 50% 50%, ${piece.hex}${Math.round(30 + piece.healthIndex * 160).toString(16).padStart(2, "0")} 0%, #0a0a0a 72%)`,
           }}
-        >
-          <span
-            style={{
-              fontSize: "11px",
-              color: "var(--muted)",
-              letterSpacing: "0.08em",
-            }}
-          >
-            {year}
-          </span>
-        </div>
+        />
 
         {/* Metadata row */}
         <div
@@ -64,9 +41,6 @@ export default function PieceCard({ piece }: { piece: PieceMeta }) {
         >
           <span style={{ color: "var(--foreground)" }}>
             {String(piece.id).padStart(2, "0")}
-          </span>
-          <span style={{ color: "var(--muted)", fontSize: "11px" }}>
-            hi {piece.healthIndex.toFixed(2)}
           </span>
           <span style={{ fontSize: "11px" }}>
             <span
