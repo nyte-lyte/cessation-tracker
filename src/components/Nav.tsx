@@ -15,7 +15,7 @@ export default function Nav() {
         <Link href="/" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
           CESSATION
         </Link>
-        <Link href="/about" style={{ letterSpacing: "0.12em", fontSize: "11px", color: "var(--muted)" }}>
+        <Link href="/about" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
           ABOUT
         </Link>
       </div>
