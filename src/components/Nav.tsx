@@ -11,17 +11,17 @@ export default function Nav() {
         justifyContent: "space-between",
       }}
     >
-      <Link href="/" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
-        CESSATION
-      </Link>
       <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+        <Link href="/" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
+          CESSATION
+        </Link>
         <Link href="/about" style={{ letterSpacing: "0.12em", fontSize: "11px", color: "var(--muted)" }}>
           ABOUT
         </Link>
-        <span style={{ color: "var(--muted)", fontSize: "11px" }}>
-          Bitcoin / Ordinals
-        </span>
       </div>
+      <span style={{ color: "var(--muted)", fontSize: "11px" }}>
+        Bitcoin / Ordinals
+      </span>
     </nav>
   );
 }
