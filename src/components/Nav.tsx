@@ -14,9 +14,14 @@ export default function Nav() {
       <Link href="/" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
         CESSATION
       </Link>
-      <span style={{ color: "var(--muted)", fontSize: "11px" }}>
-        Bitcoin / Ordinals
-      </span>
+      <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+        <Link href="/about" style={{ letterSpacing: "0.12em", fontSize: "11px", color: "var(--muted)" }}>
+          ABOUT
+        </Link>
+        <span style={{ color: "var(--muted)", fontSize: "11px" }}>
+          Bitcoin / Ordinals
+        </span>
+      </div>
     </nav>
   );
 }
