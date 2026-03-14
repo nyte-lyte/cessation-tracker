@@ -168,35 +168,49 @@ export default async function PiecePage({
             </span>
           </div>
           <p
-            style={{ color: "var(--foreground)", margin: "0 0 4px", fontSize: "13px" }}
+            style={{ color: "var(--foreground)", margin: "0 0 16px", fontSize: "13px" }}
           >
             {piece.date}
           </p>
-          <p style={{ color: "var(--muted)", margin: 0, fontSize: "11px" }}>
-            health index {piece.healthIndex.toFixed(3)}
-          </p>
-        </div>
 
-        {/* Mint status */}
-        <div
-          style={{
-            padding: "12px",
-            border: "1px solid var(--border)",
-            borderRadius: "2px",
-          }}
-        >
+          {/* Health index bar */}
           <p
             style={{
-              margin: "0 0 4px",
+              margin: "0 0 6px",
               fontSize: "11px",
-              color: "var(--muted)",
               letterSpacing: "0.08em",
+              color: "var(--muted)",
             }}
           >
-            MINT STATUS
+            HEALTH INDEX
           </p>
-          <p style={{ margin: 0, color: "var(--muted)" }}>not yet minted</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                flex: 1,
+                height: "3px",
+                background: "var(--border)",
+                borderRadius: "2px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${(piece.healthIndex * 100).toFixed(1)}%`,
+                  height: "100%",
+                  background: piece.hex,
+                  borderRadius: "2px",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: "11px", color: "var(--muted)", flexShrink: 0 }}>
+              {piece.healthIndex.toFixed(3)}
+            </span>
+          </div>
         </div>
+
+        {/* Mint status — compact */}
+        <DataRow label="MINT STATUS" value="not yet minted" />
 
         {/* ECG */}
         <div>
@@ -243,7 +257,7 @@ export default async function PiecePage({
           <DataRow label="calcium" value={`${piece.labs.calcium} mg/dL`} />
         </div>
 
-        {/* Decay */}
+        {/* Lifecycle */}
         <div>
           <p
             style={{
@@ -256,6 +270,7 @@ export default async function PiecePage({
             LIFECYCLE
           </p>
           <DataRow label="decay rate" value={piece.decayRate.toExponential(3)} />
+          <DataRow label="lifespan" value="—" />
         </div>
 
       </div>
