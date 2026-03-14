@@ -64,7 +64,7 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>Health index</span> — a
+        <span style={{ color: "var(--foreground)" }}>health index</span> — a
         normalized value derived from the metabolic panel and ECG. Higher means
         healthier. It drives the brightness and energy of the piece.
       </p>
@@ -77,9 +77,9 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>The visual</span> — six
+        <span style={{ color: "var(--foreground)" }}>visual output</span> — six
         electrolyte beams pulse across the canvas, each mapped to a specific
-        lab marker. Their color, tempo, and position shift with the data.
+        lab marker. Their hue, tempo, and position shift with the data.
         Background fields layer hue from glucose, kidney function, and cardiac
         rhythm.
       </p>
@@ -92,8 +92,8 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>Decay</span> — each piece
-        has a lifespan determined at mint by its Bitcoin block hash.
+        <span style={{ color: "var(--foreground)" }}>decay</span> — each piece
+        has a lifespan determined at mint by the Bitcoin block hash.
       </p>
 
       <p
@@ -103,9 +103,9 @@ export default function AboutPage() {
           color: "var(--muted)",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>On-chain</span> — the
-        entire engine lives in a single parent inscription on Bitcoin. Each
-        piece is a child inscription holding only its dataset.
+        <span style={{ color: "var(--foreground)" }}>on-chain</span> — the
+        entire engine lives in a single parent inscription. Each piece is a
+        child inscription holding only its dataset.
       </p>
     </div>
   );
