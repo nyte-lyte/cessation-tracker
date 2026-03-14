@@ -55,7 +55,7 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
         right: "300px",
         bottom: 0,
         zIndex: 50,
-        pointerEvents: "none",
+        pointerEvents: "auto",
       }}
     >
       <button
