@@ -64,20 +64,6 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        Each piece is generated from a real ECG and metabolic panel — personal
-        health data collected over seven years of treatment for a rare
-        cardiomyopathy. The data is never hidden. Every number in the sidebar
-        is a direct reading from that record.
-      </p>
-
-      <p
-        style={{
-          fontSize: "13px",
-          lineHeight: "2",
-          color: "var(--muted)",
-          marginBottom: "32px",
-        }}
-      >
         <span style={{ color: "var(--foreground)" }}>Health index</span> — a
         normalized value derived from the metabolic panel and ECG. Higher means
         healthier. It drives the brightness and energy of the piece.
