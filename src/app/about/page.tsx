@@ -36,11 +36,90 @@ export default function AboutPage() {
           fontSize: "13px",
           lineHeight: "2",
           color: "var(--muted)",
+          marginBottom: "64px",
         }}
       >
         With each new lifespan the partner pieces begin joined in a state of
         cessation, reemerging anew much like soul mates bound together across
         time. Cessation explores death, rebirth, and the beauty of process.
+      </p>
+
+      {/* THE SYSTEM */}
+      <p
+        style={{
+          fontSize: "11px",
+          letterSpacing: "0.12em",
+          color: "var(--muted)",
+          marginBottom: "32px",
+        }}
+      >
+        THE SYSTEM
+      </p>
+
+      <p
+        style={{
+          fontSize: "13px",
+          lineHeight: "2",
+          color: "var(--muted)",
+          marginBottom: "32px",
+        }}
+      >
+        Each piece is generated from a real ECG and metabolic panel — personal
+        health data collected over seven years of treatment for a rare
+        cardiomyopathy. The data is never hidden. Every number in the sidebar
+        is a direct reading from that record.
+      </p>
+
+      <p
+        style={{
+          fontSize: "13px",
+          lineHeight: "2",
+          color: "var(--muted)",
+          marginBottom: "32px",
+        }}
+      >
+        <span style={{ color: "var(--foreground)" }}>Health index</span> — a
+        normalized value derived from the metabolic panel and ECG. Higher means
+        healthier. It drives the brightness and energy of the piece.
+      </p>
+
+      <p
+        style={{
+          fontSize: "13px",
+          lineHeight: "2",
+          color: "var(--muted)",
+          marginBottom: "32px",
+        }}
+      >
+        <span style={{ color: "var(--foreground)" }}>The visual</span> — six
+        electrolyte beams pulse across the canvas, each mapped to a specific
+        lab marker. Their color, tempo, and position shift with the data.
+        Background fields layer hue from glucose, kidney function, and cardiac
+        rhythm.
+      </p>
+
+      <p
+        style={{
+          fontSize: "13px",
+          lineHeight: "2",
+          color: "var(--muted)",
+          marginBottom: "32px",
+        }}
+      >
+        <span style={{ color: "var(--foreground)" }}>Decay</span> — each piece
+        has a lifespan determined at mint by its Bitcoin block hash.
+      </p>
+
+      <p
+        style={{
+          fontSize: "13px",
+          lineHeight: "2",
+          color: "var(--muted)",
+        }}
+      >
+        <span style={{ color: "var(--foreground)" }}>On-chain</span> — the
+        entire engine lives in a single parent inscription on Bitcoin. Each
+        piece is a child inscription holding only its dataset.
       </p>
     </div>
   );
