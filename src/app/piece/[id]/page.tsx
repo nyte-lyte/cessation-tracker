@@ -1,6 +1,7 @@
 import { getPieceMeta, getAllPieceMeta } from "@/lib/pieceUtils";
 import { notFound } from "next/navigation";
 import PieceViewer from "@/components/PieceViewer";
+import PieceInteractions from "@/components/PieceInteractions";
 import Link from "next/link";
 import { readFileSync } from "fs";
 import path from "path";
@@ -47,10 +48,12 @@ export default async function PiecePage({
   return (
     <>
       <style>{`
+        html, body { overflow: hidden; }
         .piece-layout {
           display: grid;
           grid-template-columns: 1fr 300px;
           height: calc(100vh - 49px);
+          overflow: hidden;
         }
         .piece-canvas-wrap {
           background: #000;
@@ -58,19 +61,24 @@ export default async function PiecePage({
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
         }
         .piece-sidebar {
           border-left: 1px solid var(--border);
+          overflow-y: auto;
         }
         @media (max-width: 600px) {
+          html, body { overflow: auto; }
           .piece-layout {
             grid-template-columns: 1fr;
             grid-template-rows: auto 1fr;
             height: auto;
             min-height: calc(100vh - 49px);
+            overflow: visible;
           }
           .piece-canvas-wrap {
             padding: 24px;
+            overflow: visible;
           }
           .piece-sidebar {
             border-left: none;
@@ -78,6 +86,7 @@ export default async function PiecePage({
           }
         }
       `}</style>
+    <PieceInteractions prevId={prev?.id ?? null} nextId={next?.id ?? null} />
     <div className="piece-layout">
       {/* Canvas */}
       <div className="piece-canvas-wrap">
