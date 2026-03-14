@@ -49,6 +49,11 @@ export default async function PiecePage({
     <>
       <style>{`
         html, body { overflow: hidden; }
+        .piece-canvas-wrap:fullscreen {
+          padding: 0;
+          width: 100vw;
+          height: 100vh;
+        }
         .piece-layout {
           display: grid;
           grid-template-columns: 1fr 300px;
