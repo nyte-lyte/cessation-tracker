@@ -39,7 +39,7 @@ export default function AboutPage() {
           marginBottom: "64px",
         }}
       >
-        Like soul mates bound together across time each piece has a partner it
+        Like soul mates bound together across time, each piece has a partner it
         shares data with on their journey towards liberation. Cessation explores
         death, rebirth, and the beauty of process.
       </p>
