@@ -39,9 +39,9 @@ export default function AboutPage() {
           marginBottom: "64px",
         }}
       >
-        With each new lifespan the partner pieces begin joined in a state of
-        cessation, reemerging anew much like soul mates bound together across
-        time. Cessation explores death, rebirth, and the beauty of process.
+        Like soul mates bound together across time each piece has a partner it
+        shares data with on their journey towards liberation. Cessation explores
+        death, rebirth, and the beauty of process.
       </p>
 
       {/* THE SYSTEM */}
