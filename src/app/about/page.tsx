@@ -29,19 +29,9 @@ export default function AboutPage() {
         }}
       >
         Built upon the belief that one returns multiple times in order to move
-        toward something greater inside all of us.
-      </p>
-      <p
-        style={{
-          fontSize: "13px",
-          lineHeight: "2",
-          color: "var(--muted)",
-          marginBottom: "64px",
-        }}
-      >
-        Like soul mates bound together across time, each piece has a partner it
-        shares data with on their journey towards liberation. Cessation explores
-        death, rebirth, and the beauty of process.
+        toward something greater inside all of us, partner pieces blend data
+        across shared lifespans on their journey towards liberation. Cessation
+        explores death, rebirth, and the beauty of process.
       </p>
 
       {/* THE SYSTEM */}
