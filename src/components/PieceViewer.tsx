@@ -10,6 +10,7 @@ import {
   normalize,
   type HealthDataSet,
 } from "@/lib/pieceUtils";
+import { getAgedDataset, applyCollectionInfluence } from "@/data/decay_logic";
 
 const HASH = 88; // placeholder until mint
 
@@ -131,6 +132,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       reanimationProgress:  u("u_reanimationProgress"),
       partnerInheritedHue:  u("u_partnerInheritedHueDeg"),
       isLiberated:          u("u_isLiberated"),
+      voidProgress:         u("u_voidProgress"),
       nStr:              u("u_nitrogenStrength"),
       nHue:              u("u_nitrogenHueDeg"),
       nR:                u("u_nitrogenRadius"),
@@ -386,6 +388,24 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const lifeFraction = clamp(totalYears / lifespanYears, 0, 1);
       const inheritedStrength = Math.pow(Math.max(0, 1 - lifeFraction), 0.7);
 
+      // Chronological drift + systemic influence — matches main.js activeDataSet
+      const activeDs = applyCollectionInfluence(
+        getAgedDataset(id, lifeFraction, healthDataSets),
+        healthDataSets,
+        lifeFraction
+      );
+      const { hue: aHue, sat: aSat, bri: aBri } = computeHSBFromStats(activeDs, healthDataSets);
+      const aPAxisNorm    = clamp(normalize(activeDs.ecg.pAxis,       minMaxValues.pAxis.min,       minMaxValues.pAxis.max),       0, 1);
+      const aRAxisNorm    = clamp(normalize(activeDs.ecg.rAxis,       minMaxValues.rAxis.min,       minMaxValues.rAxis.max),       0, 1);
+      const aQtcNorm      = clamp(normalize(activeDs.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max), 0, 1);
+      const aPrNorm       = clamp(normalize(activeDs.ecg.prInterval,  minMaxValues.prInterval.min,  minMaxValues.prInterval.max),  0, 1);
+      const aVentRateNorm = clamp(normalize(activeDs.ecg.ventRate,    minMaxValues.ventRate.min,    minMaxValues.ventRate.max),    0, 1);
+      const aTAxisNorm    = clamp(normalize(activeDs.ecg.tAxis,       minMaxValues.tAxis.min,       minMaxValues.tAxis.max),       0, 1);
+      const aQrsTAngle    = clamp((Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
+      const aBcRatio      = activeDs.labs.nitrogen / Math.max(0.1, activeDs.labs.creatinine);
+      const aBunCreat     = clamp((aBcRatio - bcP05) / Math.max(1e-9, bcP95 - bcP05), 0, 1);
+      const aDecayPerYear = (activeDs.decayRate ?? 0.01) * (32 / lifespanYears);
+
       // Effective decay with health modulation
       const healthMod01 = sampleHealthMod(totalYears);
       const rateMul = 1.0 + 0.3 * (healthMod01 - 0.5);
@@ -433,24 +453,26 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       // Set all uniforms
       if (locs.time)              gl.uniform1f(locs.time, nowSec);
       if (locs.resolution)        gl.uniform2f(locs.resolution, cachedW, cachedH);
-      if (locs.glucose)           gl.uniform1f(locs.glucose, statics.u_glucose);
-      if (locs.potassium)         gl.uniform1f(locs.potassium, statics.u_potassium);
-      if (locs.egfr)              gl.uniform1f(locs.egfr, statics.u_eGFR);
-      if (locs.decayPerYear)      gl.uniform1f(locs.decayPerYear, effectiveDecayPerYear);
+      if (locs.glucose)           gl.uniform1f(locs.glucose, aHue);
+      if (locs.potassium)         gl.uniform1f(locs.potassium, aSat);
+      if (locs.egfr)              gl.uniform1f(locs.egfr, aBri);
+      if (locs.decayPerYear)      gl.uniform1f(locs.decayPerYear, aDecayPerYear * rateMul);
       if (locs.totalYears)        gl.uniform1f(locs.totalYears, totalYears);
       if (locs.lifespanYears)     gl.uniform1f(locs.lifespanYears, lifespanYears);
-      if (locs.pAxisNorm)         gl.uniform1f(locs.pAxisNorm, pAxisNorm);
-      if (locs.rAxisNorm)         gl.uniform1f(locs.rAxisNorm, rAxisNorm);
-      if (locs.qtcNorm)           gl.uniform1f(locs.qtcNorm, qtcNorm);
-      if (locs.prNorm)            gl.uniform1f(locs.prNorm, prNorm);
-      if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, ventRateNorm);
-      if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, tAxisNorm);
-      if (locs.qrsTAngle)         gl.uniform1f(locs.qrsTAngle, qrsTAngle);
+      if (locs.pAxisNorm)         gl.uniform1f(locs.pAxisNorm, aPAxisNorm);
+      if (locs.rAxisNorm)         gl.uniform1f(locs.rAxisNorm, aRAxisNorm);
+      if (locs.qtcNorm)           gl.uniform1f(locs.qtcNorm, aQtcNorm);
+      if (locs.prNorm)            gl.uniform1f(locs.prNorm, aPrNorm);
+      if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
+      if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, aTAxisNorm);
+      if (locs.qrsTAngle)         gl.uniform1f(locs.qrsTAngle, aQrsTAngle);
       if (locs.inheritedHueDeg)     gl.uniform1f(locs.inheritedHueDeg, statics.u_inheritedHueDeg);
       if (locs.inheritedStrength)   gl.uniform1f(locs.inheritedStrength, inheritedStrength);
       if (locs.reanimationProgress) gl.uniform1f(locs.reanimationProgress, 0.0);
       if (locs.partnerInheritedHue) gl.uniform1f(locs.partnerInheritedHue, 0.0);
       if (locs.isLiberated)         gl.uniform1f(locs.isLiberated, 0.0);
+      if (locs.voidProgress)        gl.uniform1f(locs.voidProgress, 0.0);
+      if (locs.bunCreat)            gl.uniform1f(locs.bunCreat, aBunCreat);
       if (locs.nStr)   gl.uniform1f(locs.nStr, nStr);
       if (locs.nHue)   gl.uniform1f(locs.nHue, nHue);
       if (locs.nR)     gl.uniform1f(locs.nR, pN);
@@ -468,7 +490,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.caStr)  gl.uniform1f(locs.caStr, caStr);
       if (locs.caHue)  gl.uniform1f(locs.caHue, caHue);
       if (locs.caR)    gl.uniform1f(locs.caR, pCa);
-      if (locs.bunCreat) gl.uniform1f(locs.bunCreat, bunCreatRatioNorm);
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
