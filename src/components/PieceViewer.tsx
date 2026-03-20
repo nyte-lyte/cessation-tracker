@@ -154,12 +154,8 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     };
 
     // Dataset-derived constants
-    const ds = healthDataSets[id];
     const statics = computeStaticUniforms(id);
     const lifespanYears = lifespanYearsFromHashDigits(HASH);
-    const { hue } = computeHSBFromStats(ds, healthDataSets);
-    const baseHueDeg = hue * 360;
-    const decayPerYear = statics.u_decayPerYear;
 
     // Hash-derived nudges (match main.js)
     const hash01 = HASH / 99;
@@ -169,114 +165,34 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     const nudgeCO2 = 18 * signed;
     const nudgeCa  = 12 * signed;
 
-    // BUN/Cr range
+    // BUN/Cr range (static bounds, value computed per-frame from activeDs)
     const allBCR = healthDataSets
       .map((d) => d.labs.nitrogen / Math.max(0.1, d.labs.creatinine))
       .sort((a, b) => a - b);
     const bcP05 = allBCR[Math.floor(0.05 * (allBCR.length - 1))];
     const bcP95 = allBCR[Math.ceil(0.95 * (allBCR.length - 1))];
-    const bcRatio = ds.labs.nitrogen / Math.max(0.1, ds.labs.creatinine);
-    const bunCreatRatioNorm = clamp(
-      (bcRatio - bcP05) / Math.max(1e-9, bcP95 - bcP05),
-      0,
-      1
-    );
 
-    // QRS-T angle
-    const allAngles = healthDataSets.map((d) =>
-      Math.abs(d.ecg.rAxis - d.ecg.tAxis)
-    );
+    // QRS-T angle bounds (static, value computed per-frame from activeDs)
+    const allAngles = healthDataSets.map((d) => Math.abs(d.ecg.rAxis - d.ecg.tAxis));
     const angMin = Math.min(...allAngles);
     const angMax = Math.max(...allAngles);
-    const qrsTAngle = clamp(
-      (Math.abs(ds.ecg.rAxis - ds.ecg.tAxis) - angMin) /
-        Math.max(1e-6, angMax - angMin),
-      0,
-      1
-    );
 
-    // Normalized ECG axes
-    const pAxisNorm = clamp(normalize(ds.ecg.pAxis, minMaxValues.pAxis.min, minMaxValues.pAxis.max), 0, 1);
-    const rAxisNorm = clamp(normalize(ds.ecg.rAxis, minMaxValues.rAxis.min, minMaxValues.rAxis.max), 0, 1);
-    const qtcNorm   = clamp(normalize(ds.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max), 0, 1);
-    const prNorm    = clamp(normalize(ds.ecg.prInterval, minMaxValues.prInterval.min, minMaxValues.prInterval.max), 0, 1);
-    const ventRateNorm = clamp(normalize(ds.ecg.ventRate, minMaxValues.ventRate.min, minMaxValues.ventRate.max), 0, 1);
-    const tAxisNorm = clamp(normalize(ds.ecg.tAxis, minMaxValues.tAxis.min, minMaxValues.tAxis.max), 0, 1);
-
-    // Winsorized percentile helper
-    function winsorized(labKey: string) {
-      const vals = healthDataSets
-        .map((d) => (d.labs as Record<string, number>)[labKey])
-        .sort((a, b) => a - b);
-      const p05 = vals[Math.floor(0.05 * (vals.length - 1))];
-      const p95 = vals[Math.ceil(0.95 * (vals.length - 1))];
-      const v = (ds.labs as Record<string, number>)[labKey];
-      return clamp(
-        (Math.max(p05, Math.min(p95, v)) - p05) / Math.max(1e-9, p95 - p05),
-        0,
-        1
-      );
+    // Precompute sorted lab arrays — these never change, safe to cache outside draw()
+    const sortedNitrogen   = healthDataSets.map((d) => d.labs.nitrogen).sort((a, b) => a - b);
+    const sortedEGFR       = healthDataSets.map((d) => d.labs.eGFR).sort((a, b) => a - b);
+    const sortedPotassium  = healthDataSets.map((d) => d.labs.potassium).sort((a, b) => a - b);
+    const labSorted: Record<string, number[]> = {};
+    for (const key of ["nitrogen","creatinine","sodium","chloride","carbonDioxide","calcium"]) {
+      labSorted[key] = healthDataSets.map((d) => (d.labs as Record<string,number>)[key]).sort((a,b) => a-b);
     }
 
-    const pN   = winsorized("nitrogen");
-    const pCr  = winsorized("creatinine");
-    const pNa  = winsorized("sodium");
-    const pCl  = winsorized("chloride");
-    const pCO2 = winsorized("carbonDioxide");
-    const pCa  = winsorized("calcium");
+    // Pure helper functions (no ds closure)
+    function winsorizedVal(value: number, sortedVals: number[]): number {
+      const p05 = sortedVals[Math.floor(0.05 * (sortedVals.length - 1))];
+      const p95 = sortedVals[Math.ceil(0.95 * (sortedVals.length - 1))];
+      return clamp((Math.max(p05, Math.min(p95, value)) - p05) / Math.max(1e-9, p95 - p05), 0, 1);
+    }
 
-    // Breathing amplitude (ventRate + QTc variability)
-    const breathAmp = (() => {
-      const pv = normalize(ds.ecg.ventRate, minMaxValues.ventRate.min, minMaxValues.ventRate.max);
-      const pq = normalize(ds.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max);
-      const V = 2 * Math.max(Math.abs(pv - 0.5), Math.abs(pq - 0.5));
-      let amp = 0.05 + 0.07 * V;
-      if (pv < 0.1 || pv > 0.9 || pq < 0.1 || pq > 0.9) amp = Math.min(0.18, amp + 0.03);
-      return amp;
-    })();
-
-    // Data-driven beam tempos (seconds per cycle) — match main.js exactly
-    const nTempo = (() => {
-      const vals = healthDataSets.map((d) => d.labs.nitrogen).sort((a, b) => a - b);
-      return 10 - 3 * percentile(ds.labs.nitrogen, vals);
-    })();
-    const crTempo = 9 + 6 * prNorm;
-    const naTempo = 10 - 5.5 * ventRateNorm;
-    const clTempo = (() => {
-      const nQT = clamp(
-        (ds.ecg.qtInterval - minMaxValues.qtInterval.min) /
-          Math.max(1e-6, minMaxValues.qtInterval.max - minMaxValues.qtInterval.min),
-        0, 1
-      );
-      return 11 - 5.5 * nQT;
-    })();
-    const co2Tempo = (() => {
-      const vals = healthDataSets.map((d) => d.labs.eGFR).sort((a, b) => a - b);
-      return 12 + 8 * percentile(ds.labs.eGFR, vals);
-    })();
-    const caTempo = 18 + 12 * (1 - tAxisNorm);
-
-    // Hue anchors for kidney beams (data-driven, match main.js)
-    const nHueAnchor = (() => {
-      const vals = healthDataSets.map((d) => d.labs.eGFR).sort((a, b) => a - b);
-      return baseHueDeg + (percentile(ds.labs.eGFR, vals) - 0.5) * 160;
-    })();
-    const crHueAnchor = (() => {
-      const vals = healthDataSets.map((d) => d.labs.potassium).sort((a, b) => a - b);
-      return baseHueDeg + (percentile(ds.labs.potassium, vals) - 0.5) * 120;
-    })();
-
-    // Sodium pulse count from QRS width
-    const naPulseCount = (() => {
-      const nQRS = clamp(
-        (ds.ecg.qrsInterval - minMaxValues.qrsInterval.min) /
-          Math.max(1e-6, minMaxValues.qrsInterval.max - minMaxValues.qrsInterval.min),
-        0, 1
-      );
-      return Math.max(3, Math.min(6, Math.round(3 + (1 - nQRS) * 3)));
-    })();
-
-    // Sodium pulse shape (multi-lobe Gaussian)
     function sodiumPulseShape(phase01: number, k: number, width = 0.12): number {
       let acc = 0;
       for (let i = 0; i < k; i++) {
@@ -287,34 +203,26 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       return 0.25 + 0.75 * (acc / k);
     }
 
-    // Sodium hue with guardrail
-    function sodiumHueDeg(pNa_: number): number {
+    function sodiumHueDeg(pNa_: number, bHueDeg: number): number {
       const targetOffset = -25 + 50 * clamp(pNa_, 0, 1);
-      let cand = wrapDeg(baseHueDeg + targetOffset);
-      const base = wrapDeg(baseHueDeg);
+      let cand = wrapDeg(bHueDeg + targetOffset);
+      const base = wrapDeg(bHueDeg);
       const diff = Math.abs(((cand - base + 540) % 360) - 180);
       if (diff < 36) cand = wrapDeg(cand + (32 - diff) * Math.sign(targetOffset || 1));
       return cand;
     }
 
-    // Chloride triangle wave with warble
-    function chlorideTriWithWarble(phase01: number): number {
+    function chlorideTriWithWarble(phase01: number, tAxisN: number): number {
       const tri = 1 - Math.abs(2 * (phase01 - Math.floor(phase01 + 0.5)));
-      const nT = clamp(
-        (ds.ecg.tAxis - minMaxValues.tAxis.min) /
-          Math.max(1e-6, minMaxValues.tAxis.max - minMaxValues.tAxis.min),
-        0, 1
-      );
-      const wf = 1.6 + 2.2 * nT;
+      const wf = 1.6 + 2.2 * tAxisN;
       const war = 0.92 + 0.08 * Math.sin(2 * Math.PI * (phase01 * wf));
       return clamp(tri * war, 0, 1);
     }
 
-    // Chloride hue with guardrail
-    function chlorideHueDeg(pCl_: number): number {
+    function chlorideHueDeg(pCl_: number, bHueDeg: number): number {
       const targetOffset = -20 + 40 * clamp(pCl_, 0, 1);
-      let cand = wrapDeg(baseHueDeg + targetOffset);
-      const base = wrapDeg(baseHueDeg);
+      let cand = wrapDeg(bHueDeg + targetOffset);
+      const base = wrapDeg(bHueDeg);
       const diff = Math.abs(((cand - base + 540) % 360) - 180);
       if (diff < 32) cand = wrapDeg(cand + Math.sign(targetOffset || 1) * (32 - diff));
       return cand;
@@ -409,7 +317,36 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       // Effective decay with health modulation
       const healthMod01 = sampleHealthMod(totalYears);
       const rateMul = 1.0 + 0.3 * (healthMod01 - 0.5);
-      const effectiveDecayPerYear = decayPerYear * rateMul;
+
+      // Per-frame beam values from activeDs
+      const activeBaseHueDeg = aHue * 360;
+      const pN   = winsorizedVal(activeDs.labs.nitrogen,      labSorted["nitrogen"]);
+      const pCr  = winsorizedVal(activeDs.labs.creatinine,    labSorted["creatinine"]);
+      const pNa  = winsorizedVal(activeDs.labs.sodium,        labSorted["sodium"]);
+      const pCl  = winsorizedVal(activeDs.labs.chloride,      labSorted["chloride"]);
+      const pCO2 = winsorizedVal(activeDs.labs.carbonDioxide, labSorted["carbonDioxide"]);
+      const pCa  = winsorizedVal(activeDs.labs.calcium,       labSorted["calcium"]);
+
+      const breathAmp = (() => {
+        const pv = normalize(activeDs.ecg.ventRate, minMaxValues.ventRate.min, minMaxValues.ventRate.max);
+        const pq = normalize(activeDs.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max);
+        const V = 2 * Math.max(Math.abs(pv - 0.5), Math.abs(pq - 0.5));
+        let amp = 0.05 + 0.07 * V;
+        if (pv < 0.1 || pv > 0.9 || pq < 0.1 || pq > 0.9) amp = Math.min(0.18, amp + 0.03);
+        return amp;
+      })();
+
+      const nTempo   = 10 - 3 * percentile(activeDs.labs.nitrogen, sortedNitrogen);
+      const crTempo  = 9 + 6 * aPrNorm;
+      const naTempo  = 10 - 5.5 * aVentRateNorm;
+      const clTempo  = 11 - 5.5 * clamp((activeDs.ecg.qtInterval - minMaxValues.qtInterval.min) / Math.max(1e-6, minMaxValues.qtInterval.max - minMaxValues.qtInterval.min), 0, 1);
+      const co2Tempo = 12 + 8 * percentile(activeDs.labs.eGFR, sortedEGFR);
+      const caTempo  = 18 + 12 * (1 - aTAxisNorm);
+
+      const nHueAnchor  = activeBaseHueDeg + (percentile(activeDs.labs.eGFR, sortedEGFR) - 0.5) * 160;
+      const crHueAnchor = activeBaseHueDeg + (percentile(activeDs.labs.potassium, sortedPotassium) - 0.5) * 120;
+
+      const naPulseCount = Math.max(3, Math.min(6, Math.round(3 + (1 - clamp((activeDs.ecg.qrsInterval - minMaxValues.qrsInterval.min) / Math.max(1e-6, minMaxValues.qrsInterval.max - minMaxValues.qrsInterval.min), 0, 1)) * 3)));
 
       // Advance beam phases using data-driven tempos
       phases.N   += (dt * 2 * Math.PI) / Math.max(1e-3, nTempo);
@@ -419,36 +356,28 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       phases.CO2 += (dt * 2 * Math.PI) / Math.max(1e-3, co2Tempo);
       phases.Ca  += (dt * 2 * Math.PI) / Math.max(1e-3, caTempo);
 
-      const arrNa = (() => {
-        const start = 0.2 * lifespanYears;
-        const ramp = Math.max(0.1 * lifespanYears, 0.25);
-        return clamp((totalYears - start) / ramp, 0, 1);
-      })();
-      const arrCl = (() => {
-        const start = 0.6 * lifespanYears;
-        const ramp = Math.max(0.08 * lifespanYears, 0.2);
-        return clamp((totalYears - start) / ramp, 0, 1);
-      })();
+      const arrNa = clamp((totalYears - 0.2 * lifespanYears) / Math.max(0.1 * lifespanYears, 0.25), 0, 1);
+      const arrCl = clamp((totalYears - 0.6 * lifespanYears) / Math.max(0.08 * lifespanYears, 0.2), 0, 1);
 
       // Beam strengths
-      const nStr  = 0.35 + 0.20 * clamp(0.58 * (0.5 + 0.5 * Math.sin(phases.N) * breathAmp), 0, 1);
-      const crStr = 0.30 + 0.20 * clamp((0.4 + 0.3 * pCr) * (0.5 + 0.5 * Math.sin(phases.C) * breathAmp), 0, 1);
-      const naAmp = arrNa * (0.08 + 0.12 * pNa) * (0.85 + 0.15 * (1 - clamp(ds.healthIndex ?? 0.5, 0, 1)));
-      const naStr = clamp((0.06 + 0.10 * pNa) + clamp(naAmp * sodiumPulseShape(phases.Na, naPulseCount, 0.12), 0, 1), 0, 1);
-      const clAmp = arrCl * (0.09 + 0.13 * pCl) * (0.9 + 0.1 * (1 - (ds.healthIndex ?? 0.5)));
-      const clStr = clamp((0.05 + 0.09 * pCl) + clamp(clAmp * chlorideTriWithWarble(phases.Cl), 0, 1), 0, 1);
+      const nStr   = 0.35 + 0.20 * clamp(0.58 * (0.5 + 0.5 * Math.sin(phases.N) * breathAmp), 0, 1);
+      const crStr  = 0.30 + 0.20 * clamp((0.4 + 0.3 * pCr) * (0.5 + 0.5 * Math.sin(phases.C) * breathAmp), 0, 1);
+      const naAmp  = arrNa * (0.08 + 0.12 * pNa) * (0.85 + 0.15 * (1 - clamp(activeDs.healthIndex ?? 0.5, 0, 1)));
+      const naStr  = clamp((0.06 + 0.10 * pNa) + clamp(naAmp * sodiumPulseShape(phases.Na, naPulseCount, 0.12), 0, 1), 0, 1);
+      const clAmp  = arrCl * (0.09 + 0.13 * pCl) * (0.9 + 0.1 * (1 - (activeDs.healthIndex ?? 0.5)));
+      const clStr  = clamp((0.05 + 0.09 * pCl) + clamp(clAmp * chlorideTriWithWarble(phases.Cl, aTAxisNorm), 0, 1), 0, 1);
       const co2Str = clamp(0.26 + 0.18 * (1 - pCO2), 0, 0.62);
       const caStr  = clamp(0.06 + 0.08 * (1 - pCO2), 0, 0.30);
 
       // Beam hues — data-driven anchors + wobble + nudges
-      const nHue  = nHueAnchor + (10 + 8 * pN)  * Math.sin(phases.N  * 0.93 + 0.14);
-      const crHue = crHueAnchor + (8 + 5 * pCr)  * Math.sin(phases.C  * 1.07 + 0.08);
-      const naHue = sodiumHueDeg(pNa) + nudgeNa + (16 + 4 * pNa) * Math.sin(phases.Na * 2 * Math.PI * 0.82 + 0.32);
-      const clHue = chlorideHueDeg(pCl) + nudgeCl + (12 + 6 * pCl) * Math.sin(phases.Cl * 2 * Math.PI * 0.88 - 0.24);
-      let co2Hue  = baseHueDeg - (24 + 12 * pCO2) + nudgeCO2 + (12 + 6 * pCO2) * Math.sin(phases.CO2 * 1.0 + 0.2);
-      co2Hue = guardHueGap(baseHueDeg, co2Hue, 30, -1);
-      let caHue   = baseHueDeg + (45 + 25 * pCa) + nudgeCa + (10 + 6 * prNorm) * Math.sin(phases.Ca * 0.92 - 0.13);
-      caHue = guardHueGap(baseHueDeg, caHue, 32, +1);
+      const nHue  = nHueAnchor + (10 + 8 * pN) * Math.sin(phases.N * 0.93 + 0.14);
+      const crHue = crHueAnchor + (8 + 5 * pCr) * Math.sin(phases.C * 1.07 + 0.08);
+      const naHue = sodiumHueDeg(pNa, activeBaseHueDeg) + nudgeNa + (16 + 4 * pNa) * Math.sin(phases.Na * 2 * Math.PI * 0.82 + 0.32);
+      const clHue = chlorideHueDeg(pCl, activeBaseHueDeg) + nudgeCl + (12 + 6 * pCl) * Math.sin(phases.Cl * 2 * Math.PI * 0.88 - 0.24);
+      let co2Hue  = activeBaseHueDeg - (24 + 12 * pCO2) + nudgeCO2 + (12 + 6 * pCO2) * Math.sin(phases.CO2 * 1.0 + 0.2);
+      co2Hue = guardHueGap(activeBaseHueDeg, co2Hue, 30, -1);
+      let caHue   = activeBaseHueDeg + (45 + 25 * pCa) + nudgeCa + (10 + 6 * aPrNorm) * Math.sin(phases.Ca * 0.92 - 0.13);
+      caHue = guardHueGap(activeBaseHueDeg, caHue, 32, +1);
 
       // Set all uniforms
       if (locs.time)              gl.uniform1f(locs.time, nowSec);
