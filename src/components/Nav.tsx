@@ -23,7 +23,7 @@ export default function Nav() {
         </Link>
       </div>
       <span style={{ color: "var(--muted)", fontSize: "11px" }}>
-        Bitcoin / Ordinals
+        nytelyte.xyz
       </span>
     </nav>
   );
