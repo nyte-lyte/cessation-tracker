@@ -18,6 +18,9 @@ export default function Nav() {
         <Link href="/about" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
           ABOUT
         </Link>
+        <Link href="/analytics" style={{ letterSpacing: "0.12em", fontSize: "12px", color: "var(--muted)" }}>
+          ANALYTICS
+        </Link>
       </div>
       <span style={{ color: "var(--muted)", fontSize: "11px" }}>
         Bitcoin / Ordinals
