@@ -5,6 +5,34 @@ import PieceInteractions from "@/components/PieceInteractions";
 import Link from "next/link";
 import { readFileSync } from "fs";
 import path from "path";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
+  if (isNaN(id) || id < 0 || id >= getAllPieceMeta().length) return {};
+  const piece = getPieceMeta(id);
+  const title = `cessation — piece ${String(id).padStart(2, "0")}`;
+  const description = `A generative art project using personal health data to reach digital nirvana.`;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: `/piece/${id}/opengraph-image`, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export function generateStaticParams() {
   return getAllPieceMeta().map((p) => ({ id: String(p.id) }));
