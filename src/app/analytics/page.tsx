@@ -152,6 +152,9 @@ export default function AnalyticsPage() {
 
       {/* Health trends */}
       <Section title="HEALTH TRENDS">
+        <div style={{ color: "var(--muted)", fontSize: "11px", marginBottom: "12px", fontStyle: "italic" }}>
+          Glucose reflects fasting state at time of draw — variation is not purely disease-driven.
+        </div>
         <div style={{
           display: "grid",
           gridTemplateColumns: "110px repeat(4, 1fr)",
