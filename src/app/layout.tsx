@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import { Analytics } from "@vercel/analytics/next";
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body>
         <Nav />
         <main>{children}</main>
+        <Analytics />
       </body>
     </html>
   );
