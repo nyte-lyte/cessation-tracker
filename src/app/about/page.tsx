@@ -55,8 +55,8 @@ export default function AboutPage() {
         }}
       >
         <span style={{ color: "var(--foreground)" }}>health index</span> — a
-        normalized value derived from the metabolic panel and ECG. Higher means
-        healthier. It drives the brightness and energy of the piece.
+        normalized value derived from the metabolic panel and ECG. Scales with
+        the intensity and energy of the piece.
       </p>
 
       <p
