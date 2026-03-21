@@ -673,6 +673,30 @@ let healthDataSets = [
       calcium: 9.3,
     },
   },
+  {
+    date: "2026-03-20",
+    ecg: {
+      ventRate: 66,
+      prInterval: 162,
+      qrsInterval: 87,
+      qtInterval: 385,
+      qtcInterval: 399,
+      pAxis: 68,
+      rAxis: 85,
+      tAxis: 52,
+    },
+    labs: {
+      glucose: 117,
+      nitrogen: 16,
+      creatinine: 0.70,
+      eGFR: 109,
+      sodium: 139,
+      potassium: 4.2,
+      chloride: 109,
+      carbonDioxide: 21,
+      calcium: 9.1,
+    },
+  },
 ];
 
 healthDataSets.sort((a, b) => {
@@ -832,6 +856,7 @@ healthDataSets.forEach((dataSet) => {
   );
 });
 
+
 function calculateHealthIndex(data) {
   let weightedIndex =
     normalize(
@@ -935,5 +960,6 @@ function updateDecayRates() {
 
 // Run once so all datasets are enriched with healthIndex + decayRate
 updateDecayRates();
+
 
 export { healthDataSets, minMaxValues};
