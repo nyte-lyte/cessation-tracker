@@ -90,6 +90,25 @@ export default async function PiecePage({
             border-top: 1px solid var(--border);
           }
         }
+        @media (orientation: landscape) and (max-height: 600px) {
+          html, body { overflow: hidden; }
+          .piece-layout {
+            grid-template-columns: 1fr 220px;
+            grid-template-rows: 1fr;
+            height: calc(100vh - 49px);
+            min-height: unset;
+            overflow: hidden;
+          }
+          .piece-canvas-wrap {
+            padding: 16px;
+            overflow: hidden;
+          }
+          .piece-sidebar {
+            border-left: 1px solid var(--border);
+            border-top: none;
+            overflow-y: auto;
+          }
+        }
       `}</style>
     <PieceInteractions prevId={prev?.id ?? null} nextId={next?.id ?? null} />
     <div className="piece-layout">
