@@ -123,6 +123,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       pAxisNorm:         u("u_pAxisNorm"),
       rAxisNorm:         u("u_rAxisNorm"),
       qtcNorm:           u("u_qtcNorm"),
+      qtcPercentile:     u("u_qtcPercentile"),
       prNorm:            u("u_prNorm"),
       ventRateNorm:      u("u_ventRateNorm"),
       tAxisNorm:         u("u_tAxisNorm"),
@@ -227,6 +228,9 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (diff < 32) cand = wrapDeg(cand + Math.sign(targetOffset || 1) * (32 - diff));
       return cand;
     }
+
+    // Pre-sorted QTc values for percentile ranking (Field 3 hue)
+    const sortedQtcValues = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
 
     // Health modulation track for effective decay rate
     const hiTrack = healthDataSets.map((d) => (d as HealthDataSet).healthIndex ?? 0.5);
@@ -391,6 +395,8 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.pAxisNorm)         gl.uniform1f(locs.pAxisNorm, aPAxisNorm);
       if (locs.rAxisNorm)         gl.uniform1f(locs.rAxisNorm, aRAxisNorm);
       if (locs.qtcNorm)           gl.uniform1f(locs.qtcNorm, aQtcNorm);
+      const aQtcPercentile = percentile(activeDs.ecg.qtcInterval, sortedQtcValues);
+      if (locs.qtcPercentile)     gl.uniform1f(locs.qtcPercentile, aQtcPercentile);
       if (locs.prNorm)            gl.uniform1f(locs.prNorm, aPrNorm);
       if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
       if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, aTAxisNorm);
