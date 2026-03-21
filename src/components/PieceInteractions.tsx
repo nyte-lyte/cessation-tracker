@@ -12,7 +12,15 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 600);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Arrow key navigation
   useEffect(() => {
@@ -42,6 +50,8 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
       document.exitFullscreen();
     }
   }
+
+  if (isMobile) return null;
 
   return (
     <div
