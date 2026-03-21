@@ -28,10 +28,10 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        Built upon the belief that one returns multiple times in order to move
-        toward something greater inside all of us, partner pieces blend data
-        across shared lifespans on their journey towards liberation. Cessation
-        explores death, rebirth, and the beauty of process.
+        Partner pieces blend data across shared lifespans on their journey
+        towards liberation. Built upon the belief that one returns multiple
+        times in order to move toward something greater inside all of us —
+        Cessation explores death, rebirth, and the beauty of process.
       </p>
 
       {/* THE SYSTEM */}
