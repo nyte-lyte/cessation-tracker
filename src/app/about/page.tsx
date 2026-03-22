@@ -85,7 +85,7 @@ export default function AboutPage() {
         <span style={{ color: "var(--foreground)" }}>decay</span> — the health
         data itself evolves over the lifetime of each piece through chronological
         drift and collection influence. The lifespan of each cycle is determined
-        by the Bitcoin block hash — the mint block for the first life, the
+        by the Bitcoin block hash — the mint block for the first lifespan, the
         cessation block for each rebirth.
       </p>
 
