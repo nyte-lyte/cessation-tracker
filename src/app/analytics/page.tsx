@@ -75,9 +75,6 @@ export default function AnalyticsPage() {
         <Row label="health index range"
           value={`${Math.min(...pieces.map((p) => p.healthIndex)).toFixed(3)} – ${Math.max(...pieces.map((p) => p.healthIndex)).toFixed(3)}`}
         />
-        <Row label="decay rate range"
-          value={`${Math.min(...pieces.map((p) => p.decayRate)).toExponential(2)} – ${Math.max(...pieces.map((p) => p.decayRate)).toExponential(2)}`}
-        />
       </Section>
 
       {/* Pair karma */}

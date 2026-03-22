@@ -316,7 +316,6 @@ export default async function PiecePage({
           >
             LIFECYCLE
           </p>
-          <DataRow label="decay rate" value={piece.decayRate.toExponential(3)} />
           <DataRow label="lifespan" value="—" />
         </div>
 

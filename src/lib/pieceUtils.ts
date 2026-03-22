@@ -27,7 +27,6 @@ export interface HealthDataSet {
     calcium: number;
   };
   healthIndex: number;
-  decayRate: number;
 }
 
 // Cast once so all downstream code has proper types
@@ -106,7 +105,6 @@ export interface PieceMeta {
   sat: number;
   bri: number;
   healthIndex: number;
-  decayRate: number;
   ecg: HealthDataSet["ecg"];
   labs: HealthDataSet["labs"];
 }
@@ -122,7 +120,6 @@ export function getPieceMeta(id: number): PieceMeta {
     sat,
     bri,
     healthIndex: ds.healthIndex ?? 0.5,
-    decayRate: ds.decayRate,
     ecg: ds.ecg,
     labs: ds.labs,
   };
@@ -156,7 +153,6 @@ export function computeStaticUniforms(id: number) {
     u_glucose: hue,
     u_potassium: sat,
     u_eGFR: bri,
-    u_decayPerYear: ds.decayRate * (32 / lifespanYears),
     u_totalYears: 0,
     u_lifespanYears: lifespanYears,
     u_pAxisNorm: clamp(normalize(ds.ecg.pAxis, minMaxValues.pAxis.min, minMaxValues.pAxis.max), 0, 1),
