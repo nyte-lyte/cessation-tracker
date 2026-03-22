@@ -2,9 +2,16 @@ export default function AboutPage() {
   return (
     <div
       style={{
+        minHeight: "calc(100vh - 50px)",
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+    <div
+      style={{
         maxWidth: "680px",
         margin: "0 auto",
-        padding: "clamp(48px, 10vh, 120px) 24px",
+        padding: "64px 24px",
       }}
     >
       <p
@@ -100,6 +107,7 @@ export default function AboutPage() {
         entire engine lives in a single parent inscription. Each piece is a
         child inscription holding only its dataset.
       </p>
+    </div>
     </div>
   );
 }
