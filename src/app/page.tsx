@@ -5,7 +5,7 @@ export default function Home() {
   const pieces = getAllPieceMeta();
 
   return (
-    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "560px" }}>
+    <div style={{ padding: "32px 24px", maxWidth: "560px", margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: "40px" }}>
         <p style={{ color: "var(--muted)", margin: 0 }}>
