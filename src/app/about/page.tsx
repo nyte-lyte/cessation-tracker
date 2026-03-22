@@ -82,8 +82,11 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>decay</span> — each piece
-        has a lifespan determined at mint by the Bitcoin block hash.
+        <span style={{ color: "var(--foreground)" }}>decay</span> — the health
+        data itself evolves over the lifetime of each piece through chronological
+        drift and collection influence. The lifespan is determined at mint by
+        the Bitcoin block hash. In the final cycle, the late phase dissolves
+        into radial light rather than darkness.
       </p>
 
       <p
