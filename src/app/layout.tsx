@@ -37,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={mono.variable}>
-      <body>
+      <body style={{ background: '#0a0a0a', minHeight: '100vh' }}>
         <Nav />
         <main>{children}</main>
         <Analytics />
