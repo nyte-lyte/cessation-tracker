@@ -4,7 +4,7 @@ export default function AboutPage() {
       style={{
         maxWidth: "680px",
         margin: "0 auto",
-        padding: "64px 24px",
+        padding: "clamp(48px, 10vh, 120px) 24px",
       }}
     >
       <p
