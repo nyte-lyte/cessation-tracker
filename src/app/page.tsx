@@ -5,19 +5,19 @@ export default function Home() {
   const pieces = getAllPieceMeta();
 
   return (
-    <div style={{ padding: "32px 24px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "560px" }}>
       {/* Header */}
       <div style={{ marginBottom: "40px" }}>
-        <p style={{ color: "var(--muted)", margin: 0, maxWidth: "480px" }}>
+        <p style={{ color: "var(--muted)", margin: 0 }}>
           A generative art project using personal health data to reach digital nirvana.
         </p>
       </div>
 
-      {/* Grid */}
+      {/* Pairs grid — two columns so each row is a partner pair */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+          gridTemplateColumns: "repeat(2, 1fr)",
           gap: "12px",
         }}
       >
