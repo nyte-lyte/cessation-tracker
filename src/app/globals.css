@@ -24,6 +24,11 @@ body {
   line-height: 1.6;
 }
 
+main {
+  min-height: 100vh;
+  background: var(--background);
+}
+
 a {
   color: inherit;
   text-decoration: none;
