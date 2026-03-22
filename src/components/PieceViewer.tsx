@@ -117,7 +117,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       glucose:           u("u_glucose"),
       potassium:         u("u_potassium"),
       egfr:              u("u_eGFR"),
-      decayPerYear:      u("u_decayPerYear"),
       totalYears:        u("u_totalYears"),
       lifespanYears:     u("u_lifespanYears"),
       pAxisNorm:         u("u_pAxisNorm"),
@@ -232,28 +231,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     // Pre-sorted QTc values for percentile ranking (Field 3 hue)
     const sortedQtcValues = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
 
-    // Health modulation track for effective decay rate
-    const hiTrack = healthDataSets.map((d) => (d as HealthDataSet).healthIndex ?? 0.5);
-    const hiMin = Math.min(...hiTrack);
-    const hiMax = Math.max(...hiTrack);
-    const hiNorm = hiTrack.map((h) => (hiMax > hiMin ? (h - hiMin) / (hiMax - hiMin) : 0.5));
-    for (let i = 1; i < hiNorm.length - 1; i++) {
-      hiNorm[i] = (hiNorm[i - 1] + 2 * hiNorm[i] + hiNorm[i + 1]) / 4;
-    }
-    const phaseYears = clamp(lifespanYears * 0.15, 4, 10);
-
-    function sampleHealthMod(totalYears: number): number {
-      if (hiNorm.length === 0) return 0.5;
-      const t = (totalYears / phaseYears) % 1;
-      const f = t * (hiNorm.length - 1);
-      const i = Math.floor(f);
-      const frac = f - i;
-      const a = hiNorm[i];
-      const b = hiNorm[Math.min(i + 1, hiNorm.length - 1)];
-      const mu = (1 - Math.cos(frac * Math.PI)) * 0.5;
-      return a * (1 - mu) + b * mu;
-    }
-
     // Beam phases — seeded from HASH (match main.js phaseSeed per beam)
     const phases = {
       N:   (HASH / 99) * 2 * Math.PI,
@@ -316,12 +293,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const aQrsTAngle    = clamp((Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
       const aBcRatio      = activeDs.labs.nitrogen / Math.max(0.1, activeDs.labs.creatinine);
       const aBunCreat     = clamp((aBcRatio - bcP05) / Math.max(1e-9, bcP95 - bcP05), 0, 1);
-      const aDecayPerYear = (activeDs.decayRate ?? 0.01) * (32 / lifespanYears);
-
-      // Effective decay with health modulation
-      const healthMod01 = sampleHealthMod(totalYears);
-      const rateMul = 1.0 + 0.3 * (healthMod01 - 0.5);
-
       // Per-frame beam values from activeDs
       const activeBaseHueDeg = aHue * 360;
       const pN   = winsorizedVal(activeDs.labs.nitrogen,      labSorted["nitrogen"]);
@@ -389,7 +360,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.glucose)           gl.uniform1f(locs.glucose, aHue);
       if (locs.potassium)         gl.uniform1f(locs.potassium, aSat);
       if (locs.egfr)              gl.uniform1f(locs.egfr, aBri);
-      if (locs.decayPerYear)      gl.uniform1f(locs.decayPerYear, aDecayPerYear * rateMul);
       if (locs.totalYears)        gl.uniform1f(locs.totalYears, totalYears);
       if (locs.lifespanYears)     gl.uniform1f(locs.lifespanYears, lifespanYears);
       if (locs.pAxisNorm)         gl.uniform1f(locs.pAxisNorm, aPAxisNorm);
