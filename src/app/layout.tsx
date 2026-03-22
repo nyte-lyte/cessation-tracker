@@ -36,10 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={mono.variable}>
-      <body style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+    <html lang="en" className={mono.variable} style={{ background: '#0a0a0a' }}>
+      <body style={{ background: '#0a0a0a', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Nav />
-        <main>{children}</main>
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center' }}>{children}</main>
         <Analytics />
         <SpeedInsights />
       </body>
