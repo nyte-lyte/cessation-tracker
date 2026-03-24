@@ -33,27 +33,21 @@ function Dot({ hex }: { hex: string }) {
   );
 }
 
-type TrendField = { key: string; label: string; getter: (d: (typeof healthDataSets)[0]) => number };
-
-const CHART_COLORS = ["#5c8fa8", "#a86060", "#6ea87a", "#8a6ea8"];
-
-function HealthTrendsChart({ ds, fields }: { ds: typeof healthDataSets; fields: TrendField[] }) {
-  const W = 800, H = 180;
-  const padL = 8, padR = 8, padT = 16, padB = 36;
+function HealthIndexChart({ pieces }: { pieces: ReturnType<typeof getAllPieceMeta> }) {
+  const W = 800, H = 160;
+  const padL = 8, padR = 8, padT = 16, padB = 8;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const n = ds.length;
+  const n = pieces.length;
 
-  function polyPoints(vals: number[]) {
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    return vals.map((v, i) => {
-      const x = padL + (i / (n - 1)) * plotW;
-      const norm = max === min ? 0.5 : (v - min) / (max - min);
-      const y = padT + (1 - norm) * plotH;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
-  }
+  const vals = pieces.map((p) => p.healthIndex);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+
+  function px(i: number) { return padL + (i / (n - 1)) * plotW; }
+  function py(v: number) { return padT + (1 - (max === min ? 0.5 : (v - min) / (max - min))) * plotH; }
+
+  const linePoints = pieces.map((p, i) => `${px(i).toFixed(1)},${py(p.healthIndex).toFixed(1)}`).join(" ");
 
   return (
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
@@ -63,25 +57,12 @@ function HealthTrendsChart({ ds, fields }: { ds: typeof healthDataSets; fields: 
         return <line key={v} x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />;
       })}
 
-      {/* Lines */}
-      {fields.map((f, fi) => (
-        <polyline
-          key={f.key}
-          points={polyPoints(ds.map(f.getter))}
-          fill="none"
-          stroke={CHART_COLORS[fi]}
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-          opacity="0.8"
-        />
-      ))}
+      {/* Line */}
+      <polyline points={linePoints} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeLinejoin="round" />
 
-      {/* Legend */}
-      {fields.map((f, fi) => (
-        <g key={f.key} transform={`translate(${padL + fi * 110}, ${H - 12})`}>
-          <line x1="0" y1="4" x2="16" y2="4" stroke={CHART_COLORS[fi]} strokeWidth="1.5" opacity="0.8" />
-          <text x="20" y="8" fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="monospace">{f.label.toUpperCase()}</text>
-        </g>
+      {/* Dots — tinted with piece hex */}
+      {pieces.map((p, i) => (
+        <circle key={i} cx={px(i).toFixed(1)} cy={py(p.healthIndex).toFixed(1)} r="3.5" fill={p.hex} opacity="0.85" />
       ))}
     </svg>
   );
@@ -109,13 +90,6 @@ export default function AnalyticsPage() {
     pairs.push({ a: ds.length - 1, b: null, karma: null, belowThreshold: false });
   }
 
-  // Health trend — key markers over time
-  const trendFields: TrendField[] = [
-    { key: "eGFR",       label: "eGFR",    getter: (d) => d.labs.eGFR },
-    { key: "creatinine", label: "creat",   getter: (d) => d.labs.creatinine },
-    { key: "glucose",    label: "glucose", getter: (d) => d.labs.glucose },
-    { key: "qtc",        label: "QTc",     getter: (d) => d.ecg.qtcInterval },
-  ];
 
   return (
     <div style={{ padding: "48px 24px", maxWidth: "860px", margin: "0 auto", fontSize: "13px" }}>
@@ -203,10 +177,7 @@ export default function AnalyticsPage() {
 
       {/* Health trends */}
       <Section title="HEALTH TRENDS">
-        <HealthTrendsChart ds={ds} fields={trendFields} />
-        <div style={{ color: "var(--muted)", fontSize: "11px", marginTop: "8px", fontStyle: "italic" }}>
-          Glucose reflects fasting state at time of draw — variation is not purely disease-driven.
-        </div>
+        <HealthIndexChart pieces={pieces} />
       </Section>
 
       {/* Karma ranking */}
