@@ -140,17 +140,17 @@ export default function AnalyticsPage() {
             <span style={{ color: "var(--muted)" }}>{String(idx).padStart(2, "0")}</span>
 
             {/* Piece A */}
-            <span style={{ color: "var(--muted)" }}>
+            <a href={`/piece/${pair.a}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
               <Dot hex={pieces[pair.a]?.hex} />
               {String(pair.a).padStart(2, "0")} · {pieces[pair.a]?.date}
-            </span>
+            </a>
 
             {/* Piece B — or awaiting partner */}
             {pair.b !== null ? (
-              <span style={{ color: "var(--muted)" }}>
+              <a href={`/piece/${pair.b}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
                 <Dot hex={pieces[pair.b]?.hex} />
                 {String(pair.b).padStart(2, "0")} · {pieces[pair.b]?.date}
-              </span>
+              </a>
             ) : (
               <span style={{ color: "var(--muted)", fontStyle: "italic" }}>awaiting partner</span>
             )}
@@ -210,10 +210,10 @@ export default function AnalyticsPage() {
               borderBottom: "1px solid var(--border)",
             }}>
               <span style={{ color: "var(--muted)" }}>{String(i).padStart(2, "0")}</span>
-              <span style={{ color: "var(--muted)" }}>
+              <a href={`/piece/${i}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
                 <Dot hex={pieces[i]?.hex} />
                 {pieces[i]?.date}
-              </span>
+              </a>
               <span style={{ textAlign: "right", color: k < threshold ? "var(--foreground)" : "var(--muted)" }}>
                 {k.toFixed(3)}
               </span>
