@@ -1,6 +1,7 @@
 import { getAllPieceMeta, healthDataSets } from "@/lib/pieceUtils";
 import { minMaxValues } from "@/data/health_data_sets";
 import { computeKarma, blendDatasets, computeLiberationThreshold } from "@/data/decay_logic";
+import { PieceLink } from "@/components/PieceLink";
 
 function Row({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -27,11 +28,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Dot({ hex }: { hex: string }) {
-  return (
-    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: hex, marginRight: 8, verticalAlign: "middle" }} />
-  );
-}
 
 function HealthIndexChart({ pieces }: { pieces: ReturnType<typeof getAllPieceMeta> }) {
   const W = 800, H = 160;
@@ -140,17 +136,11 @@ export default function AnalyticsPage() {
             <span style={{ color: "var(--muted)" }}>{String(idx).padStart(2, "0")}</span>
 
             {/* Piece A */}
-            <a href={`/piece/${pair.a}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
-              <Dot hex={pieces[pair.a]?.hex} />
-              {String(pair.a).padStart(2, "0")} · {pieces[pair.a]?.date}
-            </a>
+            <PieceLink id={pair.a} date={pieces[pair.a]?.date} hex={pieces[pair.a]?.hex} label={`${String(pair.a).padStart(2, "0")} · ${pieces[pair.a]?.date}`} />
 
             {/* Piece B — or awaiting partner */}
             {pair.b !== null ? (
-              <a href={`/piece/${pair.b}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
-                <Dot hex={pieces[pair.b]?.hex} />
-                {String(pair.b).padStart(2, "0")} · {pieces[pair.b]?.date}
-              </a>
+              <PieceLink id={pair.b} date={pieces[pair.b]?.date} hex={pieces[pair.b]?.hex} label={`${String(pair.b).padStart(2, "0")} · ${pieces[pair.b]?.date}`} />
             ) : (
               <span style={{ color: "var(--muted)", fontStyle: "italic" }}>awaiting partner</span>
             )}
@@ -210,10 +200,7 @@ export default function AnalyticsPage() {
               borderBottom: "1px solid var(--border)",
             }}>
               <span style={{ color: "var(--muted)" }}>{String(i).padStart(2, "0")}</span>
-              <a href={`/piece/${i}`} style={{ color: "var(--muted)", textDecoration: "none" }}>
-                <Dot hex={pieces[i]?.hex} />
-                {pieces[i]?.date}
-              </a>
+              <PieceLink id={i} date={pieces[i]?.date} hex={pieces[i]?.hex} />
               <span style={{ textAlign: "right", color: k < threshold ? "var(--foreground)" : "var(--muted)" }}>
                 {k.toFixed(3)}
               </span>
