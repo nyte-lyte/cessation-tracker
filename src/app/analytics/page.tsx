@@ -33,6 +33,60 @@ function Dot({ hex }: { hex: string }) {
   );
 }
 
+type TrendField = { key: string; label: string; getter: (d: (typeof healthDataSets)[0]) => number };
+
+const CHART_COLORS = ["#5c8fa8", "#a86060", "#6ea87a", "#8a6ea8"];
+
+function HealthTrendsChart({ ds, fields }: { ds: typeof healthDataSets; fields: TrendField[] }) {
+  const W = 800, H = 180;
+  const padL = 8, padR = 8, padT = 16, padB = 36;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const n = ds.length;
+
+  function polyPoints(vals: number[]) {
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    return vals.map((v, i) => {
+      const x = padL + (i / (n - 1)) * plotW;
+      const norm = max === min ? 0.5 : (v - min) / (max - min);
+      const y = padT + (1 - norm) * plotH;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+  }
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+      {/* Grid lines */}
+      {[0, 0.25, 0.5, 0.75, 1].map((v) => {
+        const y = (padT + (1 - v) * plotH).toFixed(1);
+        return <line key={v} x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />;
+      })}
+
+      {/* Lines */}
+      {fields.map((f, fi) => (
+        <polyline
+          key={f.key}
+          points={polyPoints(ds.map(f.getter))}
+          fill="none"
+          stroke={CHART_COLORS[fi]}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          opacity="0.8"
+        />
+      ))}
+
+      {/* Legend */}
+      {fields.map((f, fi) => (
+        <g key={f.key} transform={`translate(${padL + fi * 110}, ${H - 12})`}>
+          <line x1="0" y1="4" x2="16" y2="4" stroke={CHART_COLORS[fi]} strokeWidth="1.5" opacity="0.8" />
+          <text x="20" y="8" fill="rgba(255,255,255,0.35)" fontSize="10" fontFamily="monospace">{f.label.toUpperCase()}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 export default function AnalyticsPage() {
   const pieces = getAllPieceMeta();
   const ds = healthDataSets;
@@ -56,7 +110,7 @@ export default function AnalyticsPage() {
   }
 
   // Health trend — key markers over time
-  const trendFields: { key: string; label: string; getter: (d: typeof ds[0]) => number }[] = [
+  const trendFields: TrendField[] = [
     { key: "eGFR",       label: "eGFR",    getter: (d) => d.labs.eGFR },
     { key: "creatinine", label: "creat",   getter: (d) => d.labs.creatinine },
     { key: "glucose",    label: "glucose", getter: (d) => d.labs.glucose },
@@ -70,7 +124,7 @@ export default function AnalyticsPage() {
       <Section title="COLLECTION">
         <Row label="pieces"            value={ds.length} accent />
         <Row label="pairs"             value={pairs.filter((p) => p.b !== null).length + (hasSolo ? " (+ 1 awaiting partner)" : "")} />
-        <Row label="liberation threshold (karma — current snapshot)" value={threshold.toFixed(4)} accent />
+        <Row label="karma threshold" value={threshold.toFixed(4)} accent />
         <Row label="pairs below threshold" value={pairs.filter((p) => p.belowThreshold).length} />
         <Row label="health index range"
           value={`${Math.min(...pieces.map((p) => p.healthIndex)).toFixed(3)} – ${Math.max(...pieces.map((p) => p.healthIndex)).toFixed(3)}`}
@@ -149,45 +203,14 @@ export default function AnalyticsPage() {
 
       {/* Health trends */}
       <Section title="HEALTH TRENDS">
-        <div style={{ color: "var(--muted)", fontSize: "11px", marginBottom: "12px", fontStyle: "italic" }}>
+        <HealthTrendsChart ds={ds} fields={trendFields} />
+        <div style={{ color: "var(--muted)", fontSize: "11px", marginTop: "8px", fontStyle: "italic" }}>
           Glucose reflects fasting state at time of draw — variation is not purely disease-driven.
         </div>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "110px repeat(4, 1fr)",
-          gap: "0 8px",
-          padding: "6px 0",
-          borderBottom: "1px solid var(--border)",
-          color: "var(--muted)",
-          fontSize: "11px",
-          letterSpacing: "0.06em",
-        }}>
-          <span>DATE</span>
-          {trendFields.map((f) => (
-            <span key={f.key} style={{ textAlign: "right" }}>{f.label.toUpperCase()}</span>
-          ))}
-        </div>
-
-        {ds.map((d, i) => (
-          <div key={i} style={{
-            display: "grid",
-            gridTemplateColumns: "110px repeat(4, 1fr)",
-            gap: "0 8px",
-            padding: "6px 0",
-            borderBottom: "1px solid var(--border)",
-          }}>
-            <span style={{ color: "var(--muted)" }}>{d.date}</span>
-            {trendFields.map((f) => (
-              <span key={f.key} style={{ textAlign: "right", color: "var(--muted)" }}>
-                {f.getter(d)}
-              </span>
-            ))}
-          </div>
-        ))}
       </Section>
 
       {/* Karma ranking */}
-      <Section title="KARMA RANKING (individual pieces, ascending)">
+      <Section title="KARMA RANKING">
         <div style={{
           display: "grid",
           gridTemplateColumns: "40px 1fr 80px 100px",
