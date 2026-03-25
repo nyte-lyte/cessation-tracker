@@ -5,6 +5,7 @@ export default function AboutPage() {
         minHeight: "calc(100vh - 50px)",
         display: "flex",
         alignItems: "center",
+        background: "#0a0a0a",
       }}
     >
     <div
