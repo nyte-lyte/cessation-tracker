@@ -147,6 +147,12 @@ export function computeStaticUniforms(id: number) {
   const angMin = Math.min(...allAngles);
   const angMax = Math.max(...allAngles);
 
+  // Percentile-ranked axis arrays — prevents the 2025-03-26 outlier (pAxis:148, rAxis:143, tAxis:142)
+  // from compressing all other datasets into the bottom third of the normalized range.
+  const sortedPAxisValues = ds_all.map((d) => d.ecg.pAxis).sort((a, b) => a - b);
+  const sortedRAxisValues = ds_all.map((d) => d.ecg.rAxis).sort((a, b) => a - b);
+  const sortedTAxisValues = ds_all.map((d) => d.ecg.tAxis).sort((a, b) => a - b);
+
   const bcRatio = ds.labs.nitrogen / Math.max(0.1, ds.labs.creatinine);
 
   return {
@@ -155,12 +161,12 @@ export function computeStaticUniforms(id: number) {
     u_eGFR: bri,
     u_totalYears: 0,
     u_lifespanYears: lifespanYears,
-    u_pAxisNorm: clamp(normalize(ds.ecg.pAxis, minMaxValues.pAxis.min, minMaxValues.pAxis.max), 0, 1),
-    u_rAxisNorm: clamp(normalize(ds.ecg.rAxis, minMaxValues.rAxis.min, minMaxValues.rAxis.max), 0, 1),
+    u_pAxisNorm: percentile(ds.ecg.pAxis, sortedPAxisValues),
+    u_rAxisNorm: percentile(ds.ecg.rAxis, sortedRAxisValues),
     u_qtcNorm:   clamp(normalize(ds.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max), 0, 1),
     u_prNorm:    clamp(normalize(ds.ecg.prInterval, minMaxValues.prInterval.min, minMaxValues.prInterval.max), 0, 1),
     u_ventRateNorm: clamp(normalize(ds.ecg.ventRate, minMaxValues.ventRate.min, minMaxValues.ventRate.max), 0, 1),
-    u_tAxisNorm: clamp(normalize(ds.ecg.tAxis, minMaxValues.tAxis.min, minMaxValues.tAxis.max), 0, 1),
+    u_tAxisNorm: percentile(ds.ecg.tAxis, sortedTAxisValues),
     u_qrsTAngle: clamp(
       (Math.abs(ds.ecg.rAxis - ds.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin),
       0, 1
