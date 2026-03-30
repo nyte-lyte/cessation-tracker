@@ -75,11 +75,11 @@ export default function AboutPage() {
           marginBottom: "32px",
         }}
       >
-        <span style={{ color: "var(--foreground)" }}>visual output</span> — six
-        electrolyte beams pulse across the canvas, each mapped to a specific
-        lab marker. Their hue, tempo, and position shift with the data.
-        Background fields layer hue from glucose, kidney function, and cardiac
-        rhythm.
+        <span style={{ color: "var(--foreground)" }}>visual output</span> — a
+        body map rendered in light. Each physiological measurement holds a place
+        on the canvas, its hue and position driven by the data. Electrolyte
+        beams layer across the canvas, each mapped to a specific lab marker.
+        Their hue, tempo, and position shift with the data.
       </p>
 
       <p

@@ -66,23 +66,24 @@ uniform float u_partnerInheritedHueDeg; // partner's lineage hue in degrees
 uniform float u_isLiberated;            // 1 = karma exhausted, final cycle
 uniform float u_voidProgress;           // 0 = holding radial, 1 = void (both partners ceased)
 
+// Beam RGB — precomputed on CPU, eliminates per-pixel hsb2rgb calls
+uniform vec3 u_nitrogenRGB;
+uniform vec3 u_creatRGB;
+uniform vec3 u_sodiumRGB;
+uniform vec3 u_chlorideRGB;
+uniform vec3 u_co2RGB;
+uniform vec3 u_calciumRGB;
+uniform vec3 u_nirvanaRGB;   // hsb(inheritedHueDeg, 0.85, 0.92)
+uniform vec3 u_partnerRGB;   // hsb(partnerInheritedHueDeg, 0.85, 0.92)
+
 // --- helpers ---
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 vec3 hsb2rgb(float H, float S, float B){
-    float c = B * S;
-    float Hp = mod(H/60., 6.);
-    float X = c * (1. - abs(mod(Hp, 2.)- 1.));
-    vec3 rgb = vec3(0.);
-    if(0. <= Hp && Hp < 1.)rgb = vec3(c, X, 0.);
-    else if(1.<= Hp && Hp <2.)rgb = vec3(X, c, 0.);
-    else if(2.<= Hp && Hp <3.)rgb = vec3(0., c, X);
-    else if(3.<= Hp && Hp <4.)rgb = vec3(0., X, c);
-    else if(4.<= Hp && Hp <5.)rgb = vec3(X, 0., c);
-    else if(5.<= Hp && Hp <6.)rgb = vec3(c, 0., X);
-    float m = B - c;
-    return rgb + vec3(m);
+    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+    vec3 p = abs(fract(vec3(H/360.0) + K.xyz) * 6.0 - K.www);
+    return B * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), S);
 }
 
 vec3 screenBlend(vec3 base,vec3 tint,float k){
@@ -150,28 +151,28 @@ void main(){
     float abCO2 = abs(u_co2Norm          - 0.5) * 2.0;
     float abCa  = abs(u_calciumRadius    - 0.5) * 2.0;
 
-    float os = 0.07 * driftMul; // orbit scale — grows with age
+    float os = 0.10 * driftMul; // orbit scale — grows with age
 
     // ECG field centers (left half) — beat at cardiac tempo
-    vec2 fVR  = vec2(0.10, 0.12) + os*abVR  * vec2(sin(t*0.190*heartPace+1.0), cos(t*0.130*heartPace+2.0)) + 0.025*vec2(sin(u_time*0.23+1.0), cos(u_time*0.17+2.0));
-    vec2 fPR  = vec2(0.28, 0.16) + os*abPR  * vec2(cos(t*0.170*heartPace+3.0), sin(t*0.110*heartPace+1.5)) + 0.025*vec2(cos(u_time*0.19+3.0), sin(u_time*0.14+1.5));
-    vec2 fQRS = vec2(0.12, 0.40) + os*abQRS * vec2(sin(t*0.230*heartPace+2.5), cos(t*0.150*heartPace+0.8)) + 0.025*vec2(sin(u_time*0.25+2.5), cos(u_time*0.18+0.8));
-    vec2 fPA  = vec2(0.38, 0.25) + os*abPA  * vec2(cos(t*0.210*heartPace+4.0), sin(t*0.140*heartPace+2.0)) + 0.025*vec2(cos(u_time*0.21+4.0), sin(u_time*0.16+2.0));
-    vec2 fRA  = vec2(0.22, 0.55) + os*abRA  * vec2(sin(t*0.180*heartPace+1.2), cos(t*0.120*heartPace+3.5)) + 0.025*vec2(sin(u_time*0.18+1.2), cos(u_time*0.22+3.5));
-    vec2 fQTc = vec2(0.32, 0.70) + os*abQTc * vec2(cos(t*0.220*heartPace+0.5), sin(t*0.160*heartPace+4.0)) + 0.025*vec2(cos(u_time*0.27+0.5), sin(u_time*0.20+4.0));
-    vec2 fTA  = vec2(0.44, 0.50) + os*abTA  * vec2(sin(t*0.160*heartPace+3.0), cos(t*0.110*heartPace+1.0)) + 0.025*vec2(sin(u_time*0.22+3.0), cos(u_time*0.15+1.0));
-    vec2 fAng = vec2(0.15, 0.82) + os*abAng * vec2(cos(t*0.200*heartPace+2.0), sin(t*0.140*heartPace+0.3)) + 0.025*vec2(cos(u_time*0.20+2.0), sin(u_time*0.13+0.3));
+    vec2 fVR  = vec2(0.10, 0.12) + os*abVR  * vec2(sin(t*0.190*heartPace+1.0), cos(t*0.130*heartPace+2.0)) + 0.03*vec2(sin(u_time*0.23+1.0), cos(u_time*0.17+2.0));
+    vec2 fPR  = vec2(0.28, 0.16) + os*abPR  * vec2(cos(t*0.170*heartPace+3.0), sin(t*0.110*heartPace+1.5)) + 0.03*vec2(cos(u_time*0.19+3.0), sin(u_time*0.14+1.5));
+    vec2 fQRS = vec2(0.12, 0.40) + os*abQRS * vec2(sin(t*0.230*heartPace+2.5), cos(t*0.150*heartPace+0.8)) + 0.03*vec2(sin(u_time*0.25+2.5), cos(u_time*0.18+0.8));
+    vec2 fPA  = vec2(0.38, 0.25) + os*abPA  * vec2(cos(t*0.210*heartPace+4.0), sin(t*0.140*heartPace+2.0)) + 0.03*vec2(cos(u_time*0.21+4.0), sin(u_time*0.16+2.0));
+    vec2 fRA  = vec2(0.22, 0.55) + os*abRA  * vec2(sin(t*0.180*heartPace+1.2), cos(t*0.120*heartPace+3.5)) + 0.03*vec2(sin(u_time*0.18+1.2), cos(u_time*0.22+3.5));
+    vec2 fQTc = vec2(0.32, 0.70) + os*abQTc * vec2(cos(t*0.220*heartPace+0.5), sin(t*0.160*heartPace+4.0)) + 0.03*vec2(cos(u_time*0.27+0.5), sin(u_time*0.20+4.0));
+    vec2 fTA  = vec2(0.44, 0.50) + os*abTA  * vec2(sin(t*0.160*heartPace+3.0), cos(t*0.110*heartPace+1.0)) + 0.03*vec2(sin(u_time*0.22+3.0), cos(u_time*0.15+1.0));
+    vec2 fAng = vec2(0.15, 0.82) + os*abAng * vec2(cos(t*0.200*heartPace+2.0), sin(t*0.140*heartPace+0.3)) + 0.03*vec2(cos(u_time*0.20+2.0), sin(u_time*0.13+0.3));
 
     // Lab field centers (right half) — breathe at metabolic tempo
-    vec2 fGlu = vec2(0.52, 0.08) + os*abGlu * vec2(sin(t*0.140*labPace+1.5), cos(t*0.090*labPace+3.0)) + 0.025*vec2(sin(u_time*0.16+1.5), cos(u_time*0.11+3.0));
-    vec2 fBUN = vec2(0.62, 0.22) + os*abBUN * vec2(cos(t*0.120*labPace+0.8), sin(t*0.080*labPace+2.5)) + 0.025*vec2(cos(u_time*0.14+0.8), sin(u_time*0.10+2.5));
-    vec2 fCr  = vec2(0.80, 0.18) + os*abCr  * vec2(sin(t*0.110*labPace+2.0), cos(t*0.070*labPace+1.0)) + 0.025*vec2(sin(u_time*0.13+2.0), cos(u_time*0.09+1.0));
-    vec2 fEGF = vec2(0.90, 0.42) + os*abEGF * vec2(cos(t*0.100*labPace+3.5), sin(t*0.070*labPace+0.5)) + 0.025*vec2(cos(u_time*0.12+3.5), sin(u_time*0.08+0.5));
-    vec2 fNa  = vec2(0.58, 0.48) + os*abNa  * vec2(sin(t*0.130*labPace+1.0), cos(t*0.090*labPace+4.0)) + 0.025*vec2(sin(u_time*0.15+1.0), cos(u_time*0.10+4.0));
-    vec2 fK   = vec2(0.74, 0.54) + os*abK   * vec2(cos(t*0.120*labPace+2.5), sin(t*0.080*labPace+1.5)) + 0.025*vec2(cos(u_time*0.11+2.5), sin(u_time*0.08+1.5));
-    vec2 fCl  = vec2(0.62, 0.72) + os*abCl  * vec2(sin(t*0.110*labPace+3.0), cos(t*0.070*labPace+0.8)) + 0.025*vec2(sin(u_time*0.13+3.0), cos(u_time*0.09+0.8));
-    vec2 fCO2 = vec2(0.82, 0.76) + os*abCO2 * vec2(cos(t*0.100*labPace+1.5), sin(t*0.070*labPace+2.0)) + 0.025*vec2(cos(u_time*0.10+1.5), sin(u_time*0.07+2.0));
-    vec2 fCa  = vec2(0.92, 0.62) + os*abCa  * vec2(sin(t*0.090*labPace+0.5), cos(t*0.060*labPace+3.0)) + 0.025*vec2(sin(u_time*0.11+0.5), cos(u_time*0.08+3.0));
+    vec2 fGlu = vec2(0.52, 0.08) + os*abGlu * vec2(sin(t*0.140*labPace+1.5), cos(t*0.090*labPace+3.0)) + 0.03*vec2(sin(u_time*0.16+1.5), cos(u_time*0.11+3.0));
+    vec2 fBUN = vec2(0.62, 0.22) + os*abBUN * vec2(cos(t*0.120*labPace+0.8), sin(t*0.080*labPace+2.5)) + 0.03*vec2(cos(u_time*0.14+0.8), sin(u_time*0.10+2.5));
+    vec2 fCr  = vec2(0.80, 0.18) + os*abCr  * vec2(sin(t*0.110*labPace+2.0), cos(t*0.070*labPace+1.0)) + 0.03*vec2(sin(u_time*0.13+2.0), cos(u_time*0.09+1.0));
+    vec2 fEGF = vec2(0.90, 0.42) + os*abEGF * vec2(cos(t*0.100*labPace+3.5), sin(t*0.070*labPace+0.5)) + 0.03*vec2(cos(u_time*0.12+3.5), sin(u_time*0.08+0.5));
+    vec2 fNa  = vec2(0.58, 0.48) + os*abNa  * vec2(sin(t*0.130*labPace+1.0), cos(t*0.090*labPace+4.0)) + 0.03*vec2(sin(u_time*0.15+1.0), cos(u_time*0.10+4.0));
+    vec2 fK   = vec2(0.74, 0.54) + os*abK   * vec2(cos(t*0.120*labPace+2.5), sin(t*0.080*labPace+1.5)) + 0.03*vec2(cos(u_time*0.11+2.5), sin(u_time*0.08+1.5));
+    vec2 fCl  = vec2(0.62, 0.72) + os*abCl  * vec2(sin(t*0.110*labPace+3.0), cos(t*0.070*labPace+0.8)) + 0.03*vec2(sin(u_time*0.13+3.0), cos(u_time*0.09+0.8));
+    vec2 fCO2 = vec2(0.82, 0.76) + os*abCO2 * vec2(cos(t*0.100*labPace+1.5), sin(t*0.070*labPace+2.0)) + 0.03*vec2(cos(u_time*0.10+1.5), sin(u_time*0.07+2.0));
+    vec2 fCa  = vec2(0.92, 0.62) + os*abCa  * vec2(sin(t*0.090*labPace+0.5), cos(t*0.060*labPace+3.0)) + 0.03*vec2(sin(u_time*0.11+0.5), cos(u_time*0.08+3.0));
 
     // Inherited lineage field — antipodal to glucose anchor, fades over lifetime
     // cf4 kept for reanimation visuals downstream
@@ -435,29 +436,23 @@ float m2  = 1. - smoothstep(caInner2, caOuter2, ellipseDist(uv, c2, caAspect * 0
 float mCa = max(m1, m2);
     
     // Nitrogen
-    vec3 nitrogenRGB = hsb2rgb(u_nitrogenHueDeg, .90, .78);
-    rgbColor = clamp(rgbColor + nitrogenRGB * u_nitrogenStrength * mN, 0., 1.0);
+    rgbColor = clamp(rgbColor + u_nitrogenRGB * u_nitrogenStrength * mN, 0., 1.0);
 
     // Creatinine
-    vec3 creatRGB = hsb2rgb(u_creatinineHueDeg, .90, .78);
-    rgbColor = clamp(rgbColor + creatRGB * u_creatinineStrength * mC, 0., 1.0);
+    rgbColor = clamp(rgbColor + u_creatRGB * u_creatinineStrength * mC, 0., 1.0);
 
     // Sodium
-    vec3 sodiumRGB = hsb2rgb(u_sodiumHueDeg, .94, .80);
-    rgbColor = clamp(rgbColor + sodiumRGB * u_sodiumStrength * mNa, 0., 1.0);
+    rgbColor = clamp(rgbColor + u_sodiumRGB * u_sodiumStrength * mNa, 0., 1.0);
 
     // Chloride
-    vec3 chlorideRGB = hsb2rgb(u_chlorideHueDeg, .75, .85);
-    rgbColor = clamp(rgbColor + chlorideRGB * strengthCl * mCl, 0., 1.0);
+    rgbColor = clamp(rgbColor + u_chlorideRGB * strengthCl * mCl, 0., 1.0);
 
     // CO2
-    vec3 co2Tint = hsb2rgb(u_co2HueDeg, .75, 1.00);
-    rgbColor = clamp(rgbColor + co2Tint * haloW, 0., 1.);
+    rgbColor = clamp(rgbColor + u_co2RGB * haloW, 0., 1.);
 
     // Calcium
     float darkW = smoothstep(.65, .25, lum);
-    vec3 caTint = hsb2rgb(u_calciumHueDeg, 0.70, 0.95);
-    rgbColor = screenBlend(rgbColor, caTint, u_calciumStrength * mCa * darkW);
+    rgbColor = screenBlend(rgbColor, u_calciumRGB, u_calciumStrength * mCa * darkW);
 
     float liberated = step(0.5, u_isLiberated);
     float latePhase = smoothstep(0.70, 1.00, lifeFraction);
@@ -495,15 +490,13 @@ float mCa = max(m1, m2);
     vec2 partnerOrigin = clamp(vec2(1.0) - cf4, 0.1, 0.9);
     vec2 partnerPos    = mix(partnerOrigin, vec2(0.5), partnerArrival);
     vec2 ownPos        = mix(cf4, vec2(0.5), partnerArrival * 0.6);
-    vec3 nirvanaCol    = hsb2rgb(u_inheritedHueDeg, 0.85, 0.92);
-    vec3 partnerCol    = hsb2rgb(u_partnerInheritedHueDeg, 0.85, 0.92);
     float pGlow = exp(-dot(uv - partnerPos, uv - partnerPos) / 0.14);
     float oGlow = exp(-dot(uv - ownPos,     uv - ownPos)     / 0.14);
-    vec3 meetingField = clamp(nirvanaCol * oGlow + partnerCol * pGlow * partnerArrival, 0.0, 1.0);
+    vec3 meetingField = clamp(u_nirvanaRGB * oGlow + u_partnerRGB * pGlow * partnerArrival, 0.0, 1.0);
 
     // --- State blending ---
     // Non-final nirvana: inherited hue glow → partner collision → new life
-    vec3 nirvanaState = mix(nirvanaCol * 0.90, meetingField, smoothstep(0.0, 0.5, u_reanimationProgress));
+    vec3 nirvanaState = mix(u_nirvanaRGB * 0.90, meetingField, smoothstep(0.0, 0.5, u_reanimationProgress));
     // Final nirvana: pure radial, permanent
     nirvanaState = mix(nirvanaState, nirvanaRadial, liberated);
 
