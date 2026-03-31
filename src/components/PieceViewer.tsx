@@ -18,6 +18,22 @@ function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
 
+function hsbToRgb(hDeg: number, s: number, b: number): [number, number, number] {
+  const H = ((hDeg % 360) + 360) % 360;
+  const C = b * s;
+  const Hp = H / 60;
+  const X = C * (1 - Math.abs((Hp % 2) - 1));
+  let r1 = 0, g1 = 0, b1 = 0;
+  if (Hp < 1)      [r1, g1, b1] = [C, X, 0];
+  else if (Hp < 2) [r1, g1, b1] = [X, C, 0];
+  else if (Hp < 3) [r1, g1, b1] = [0, C, X];
+  else if (Hp < 4) [r1, g1, b1] = [0, X, C];
+  else if (Hp < 5) [r1, g1, b1] = [X, 0, C];
+  else             [r1, g1, b1] = [C, 0, X];
+  const m = b - C;
+  return [r1 + m, g1 + m, b1 + m];
+}
+
 function wrapDeg(h: number) {
   return ((h % 360) + 360) % 360;
 }
@@ -154,6 +170,14 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       caHue:             u("u_calciumHueDeg"),
       caR:               u("u_calciumRadius"),
       bunCreat:          u("u_bunCreatRatioNorm"),
+      nRGB:    gl.getUniformLocation(program, "u_nitrogenRGB"),
+      crRGB:   gl.getUniformLocation(program, "u_creatRGB"),
+      naRGB:   gl.getUniformLocation(program, "u_sodiumRGB"),
+      clRGB:   gl.getUniformLocation(program, "u_chlorideRGB"),
+      co2RGB:  gl.getUniformLocation(program, "u_co2RGB"),
+      caRGB:   gl.getUniformLocation(program, "u_calciumRGB"),
+      nirvanaRGB: gl.getUniformLocation(program, "u_nirvanaRGB"),
+      partnerRGB: gl.getUniformLocation(program, "u_partnerRGB"),
     };
 
     // Dataset-derived constants
@@ -407,6 +431,15 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.caStr)  gl.uniform1f(locs.caStr, caStr);
       if (locs.caHue)  gl.uniform1f(locs.caHue, caHue);
       if (locs.caR)    gl.uniform1f(locs.caR, pCa);
+      // Beam RGB vec3 uniforms (shader uses these, not the hue degree floats)
+      if (locs.nRGB)    gl.uniform3fv(locs.nRGB,   hsbToRgb(nHue,   0.90, 0.78));
+      if (locs.crRGB)   gl.uniform3fv(locs.crRGB,  hsbToRgb(crHue,  0.90, 0.78));
+      if (locs.naRGB)   gl.uniform3fv(locs.naRGB,  hsbToRgb(naHue,  0.94, 0.80));
+      if (locs.clRGB)   gl.uniform3fv(locs.clRGB,  hsbToRgb(clHue,  0.75, 0.85));
+      if (locs.co2RGB)  gl.uniform3fv(locs.co2RGB, hsbToRgb(co2Hue, 0.75, 1.00));
+      if (locs.caRGB)   gl.uniform3fv(locs.caRGB,  hsbToRgb(caHue,  0.70, 0.95));
+      if (locs.nirvanaRGB) gl.uniform3fv(locs.nirvanaRGB, hsbToRgb(statics.u_inheritedHueDeg, 0.85, 0.92));
+      if (locs.partnerRGB) gl.uniform3fv(locs.partnerRGB, hsbToRgb(0.0, 0.85, 0.92));
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
