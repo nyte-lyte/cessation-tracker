@@ -71,6 +71,7 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
       <button
         onClick={toggleFullscreen}
         title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+        className="hidden md:flex"
         style={{
           position: "absolute",
           top: "12px",
@@ -81,7 +82,6 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
           width: "32px",
           height: "32px",
           cursor: "pointer",
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           opacity: hovered ? 1 : 0,
