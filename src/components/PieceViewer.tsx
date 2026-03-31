@@ -123,6 +123,9 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       rAxisNorm:         u("u_rAxisNorm"),
       qtcNorm:           u("u_qtcNorm"),
       qtcPercentile:     u("u_qtcPercentile"),
+      pAxisPct:          u("u_pAxisPct"),
+      rAxisPct:          u("u_rAxisPct"),
+      tAxisPct:          u("u_tAxisPct"),
       prNorm:            u("u_prNorm"),
       ventRateNorm:      u("u_ventRateNorm"),
       tAxisNorm:         u("u_tAxisNorm"),
@@ -228,8 +231,11 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       return cand;
     }
 
-    // Pre-sorted QTc values for percentile ranking (Field 3 hue)
-    const sortedQtcValues = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
+    // Pre-sorted values for percentile ranking (field hues)
+    const sortedQtcValues    = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
+    const sortedPAxisValues  = healthDataSets.map((d) => d.ecg.pAxis).sort((a, b) => a - b);
+    const sortedRAxisValues  = healthDataSets.map((d) => d.ecg.rAxis).sort((a, b) => a - b);
+    const sortedTAxisValues  = healthDataSets.map((d) => d.ecg.tAxis).sort((a, b) => a - b);
 
     // Beam phases — seeded from HASH (match main.js phaseSeed per beam)
     const phases = {
@@ -367,6 +373,12 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.qtcNorm)           gl.uniform1f(locs.qtcNorm, aQtcNorm);
       const aQtcPercentile = percentile(activeDs.ecg.qtcInterval, sortedQtcValues);
       if (locs.qtcPercentile)     gl.uniform1f(locs.qtcPercentile, aQtcPercentile);
+      const aPAxisPct = percentile(activeDs.ecg.pAxis, sortedPAxisValues);
+      const aRAxisPct = percentile(activeDs.ecg.rAxis, sortedRAxisValues);
+      const aTAxisPct = percentile(activeDs.ecg.tAxis, sortedTAxisValues);
+      if (locs.pAxisPct)          gl.uniform1f(locs.pAxisPct, aPAxisPct);
+      if (locs.rAxisPct)          gl.uniform1f(locs.rAxisPct, aRAxisPct);
+      if (locs.tAxisPct)          gl.uniform1f(locs.tAxisPct, aTAxisPct);
       if (locs.prNorm)            gl.uniform1f(locs.prNorm, aPrNorm);
       if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
       if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, aTAxisNorm);
