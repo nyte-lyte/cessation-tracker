@@ -142,6 +142,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       pAxisPct:          u("u_pAxisPct"),
       rAxisPct:          u("u_rAxisPct"),
       tAxisPct:          u("u_tAxisPct"),
+      qrsNorm:           u("u_qrsNorm"),
       prNorm:            u("u_prNorm"),
       ventRateNorm:      u("u_ventRateNorm"),
       tAxisNorm:         u("u_tAxisNorm"),
@@ -320,7 +321,8 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const aPrNorm       = clamp(normalize(activeDs.ecg.prInterval,  minMaxValues.prInterval.min,  minMaxValues.prInterval.max),  0, 1);
       const aVentRateNorm = clamp(normalize(activeDs.ecg.ventRate,    minMaxValues.ventRate.min,    minMaxValues.ventRate.max),    0, 1);
       const aTAxisNorm    = clamp(normalize(activeDs.ecg.tAxis,       minMaxValues.tAxis.min,       minMaxValues.tAxis.max),       0, 1);
-      const aQrsTAngle    = clamp((Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
+      const aQrsNorm   = clamp(normalize(activeDs.ecg.qrsInterval, minMaxValues.qrsInterval.min, minMaxValues.qrsInterval.max), 0, 1);
+      const aQrsTAngle = clamp((Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
       const aBcRatio      = activeDs.labs.nitrogen / Math.max(0.1, activeDs.labs.creatinine);
       const aBunCreat     = clamp((aBcRatio - bcP05) / Math.max(1e-9, bcP95 - bcP05), 0, 1);
       // Per-frame beam values from activeDs
@@ -400,13 +402,14 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const aPAxisPct = percentile(activeDs.ecg.pAxis, sortedPAxisValues);
       const aRAxisPct = percentile(activeDs.ecg.rAxis, sortedRAxisValues);
       const aTAxisPct = percentile(activeDs.ecg.tAxis, sortedTAxisValues);
-      if (locs.pAxisPct)          gl.uniform1f(locs.pAxisPct, aPAxisPct);
-      if (locs.rAxisPct)          gl.uniform1f(locs.rAxisPct, aRAxisPct);
-      if (locs.tAxisPct)          gl.uniform1f(locs.tAxisPct, aTAxisPct);
-      if (locs.prNorm)            gl.uniform1f(locs.prNorm, aPrNorm);
-      if (locs.ventRateNorm)      gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
-      if (locs.tAxisNorm)         gl.uniform1f(locs.tAxisNorm, aTAxisNorm);
-      if (locs.qrsTAngle)         gl.uniform1f(locs.qrsTAngle, aQrsTAngle);
+      if (locs.pAxisPct)     gl.uniform1f(locs.pAxisPct,    aPAxisPct);
+      if (locs.rAxisPct)     gl.uniform1f(locs.rAxisPct,    aRAxisPct);
+      if (locs.tAxisPct)     gl.uniform1f(locs.tAxisPct,    aTAxisPct);
+      if (locs.qrsNorm)      gl.uniform1f(locs.qrsNorm,     aQrsNorm);
+      if (locs.prNorm)       gl.uniform1f(locs.prNorm,      aPrNorm);
+      if (locs.ventRateNorm) gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
+      if (locs.tAxisNorm)    gl.uniform1f(locs.tAxisNorm,   aTAxisNorm);
+      if (locs.qrsTAngle)    gl.uniform1f(locs.qrsTAngle,   aQrsTAngle);
       if (locs.inheritedHueDeg)     gl.uniform1f(locs.inheritedHueDeg, statics.u_inheritedHueDeg);
       if (locs.inheritedStrength)   gl.uniform1f(locs.inheritedStrength, inheritedStrength);
       if (locs.reanimationProgress) gl.uniform1f(locs.reanimationProgress, 0.0);
