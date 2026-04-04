@@ -56,9 +56,19 @@ function HealthIndexChart({ pieces }: { pieces: ReturnType<typeof getAllPieceMet
       {/* Line */}
       <polyline points={linePoints} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeLinejoin="round" />
 
-      {/* Dots — tinted with piece hex */}
+      {/* Per-piece gradient defs */}
+      <defs>
+        {pieces.map((p) => (
+          <linearGradient key={p.id} id={`dotgrad-${p.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={p.hex1} />
+            <stop offset="100%" stopColor={p.hex2} />
+          </linearGradient>
+        ))}
+      </defs>
+
+      {/* Dots */}
       {pieces.map((p, i) => (
-        <circle key={i} cx={px(i).toFixed(1)} cy={py(p.healthIndex).toFixed(1)} r="3.5" fill={p.hex} opacity="0.85" />
+        <circle key={i} cx={px(i).toFixed(1)} cy={py(p.healthIndex).toFixed(1)} r="3.5" fill={`url(#dotgrad-${p.id})`} opacity="0.85" />
       ))}
     </svg>
   );
@@ -136,11 +146,11 @@ export default function AnalyticsPage() {
             <span style={{ color: "var(--muted)" }}>{String(idx).padStart(2, "0")}</span>
 
             {/* Piece A */}
-            <PieceLink id={pair.a} date={pieces[pair.a]?.date} hex={pieces[pair.a]?.hex} label={`${String(pair.a).padStart(2, "0")} · ${pieces[pair.a]?.date}`} />
+            <PieceLink id={pair.a} date={pieces[pair.a]?.date} hex1={pieces[pair.a]?.hex1} hex2={pieces[pair.a]?.hex2} label={`${String(pair.a).padStart(2, "0")} · ${pieces[pair.a]?.date}`} />
 
             {/* Piece B — or awaiting partner */}
             {pair.b !== null ? (
-              <PieceLink id={pair.b} date={pieces[pair.b]?.date} hex={pieces[pair.b]?.hex} label={`${String(pair.b).padStart(2, "0")} · ${pieces[pair.b]?.date}`} />
+              <PieceLink id={pair.b} date={pieces[pair.b]?.date} hex1={pieces[pair.b]?.hex1} hex2={pieces[pair.b]?.hex2} label={`${String(pair.b).padStart(2, "0")} · ${pieces[pair.b]?.date}`} />
             ) : (
               <span style={{ color: "var(--muted)", fontStyle: "italic" }}>awaiting partner</span>
             )}
@@ -200,7 +210,7 @@ export default function AnalyticsPage() {
               borderBottom: "1px solid var(--border)",
             }}>
               <span style={{ color: "var(--muted)" }}>{String(i).padStart(2, "0")}</span>
-              <PieceLink id={i} date={pieces[i]?.date} hex={pieces[i]?.hex} />
+              <PieceLink id={i} date={pieces[i]?.date} hex1={pieces[i]?.hex1} hex2={pieces[i]?.hex2} />
               <span style={{ textAlign: "right", color: k < threshold ? "var(--foreground)" : "var(--muted)" }}>
                 {k.toFixed(3)}
               </span>

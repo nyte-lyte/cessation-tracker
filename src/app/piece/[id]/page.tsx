@@ -200,7 +200,7 @@ export default async function PiecePage({
                 width: "10px",
                 height: "10px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${piece.hex1} 50%, ${piece.hex2} 50%)`,
+                background: `linear-gradient(90deg, ${piece.hex1}, ${piece.hex2})`,
                 flexShrink: 0,
               }}
             />
