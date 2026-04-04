@@ -24,9 +24,16 @@ export function PieceLink({ id, date, hex1, hex2, label }: { id: number; date: s
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        color: hovered ? hex1 : "var(--muted)",
         textDecoration: "none",
-        transition: "color 0.15s ease",
+        transition: "opacity 0.15s ease",
+        ...(hovered
+          ? {
+              background: `linear-gradient(90deg, ${hex1}, ${hex2})`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }
+          : { color: "var(--muted)" }),
       }}
     >
       <Dot hex1={hex1} hex2={hex2} />
