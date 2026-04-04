@@ -15,7 +15,7 @@ export default function PieceCard({ piece }: { piece: PieceMeta }) {
           cursor: "pointer",
         }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.borderColor = piece.hex)
+          (e.currentTarget.style.borderColor = piece.hex1)
         }
         onMouseLeave={(e) =>
           (e.currentTarget.style.borderColor = "var(--border)")
@@ -25,7 +25,7 @@ export default function PieceCard({ piece }: { piece: PieceMeta }) {
         <div
           style={{
             aspectRatio: "1 / 1",
-            background: `radial-gradient(ellipse at 50% 50%, ${piece.hex}${Math.round(30 + piece.healthIndex * 160).toString(16).padStart(2, "0")} 0%, #0a0a0a 72%)`,
+            background: `linear-gradient(135deg, ${piece.hex1}, ${piece.hex2})`,
           }}
         />
 

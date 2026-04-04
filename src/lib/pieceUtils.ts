@@ -95,12 +95,80 @@ export function lifespanYearsFromHashDigits(x: number): number {
   return lifespan;
 }
 
+// ─── Two-color identity ───────────────────────────────────────
+// hex1 = circular mean of 8 ECG field hues (all percentile-ranked)
+// hex2 = circular mean of 9 lab field hues (all percentile-ranked)
+// Matches exactly what the shader renders — ECG fields left, lab fields right.
+
+function circularMeanHueDeg(huesDeg: number[]): number {
+  const x = huesDeg.reduce((s, h) => s + Math.cos((h * Math.PI) / 180), 0);
+  const y = huesDeg.reduce((s, h) => s + Math.sin((h * Math.PI) / 180), 0);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+export function computePieceColors(id: number): { hex1: string; hex2: string } {
+  const ds = ds_all[id];
+
+  // Pre-sorted arrays for percentile ranking
+  const sVR  = ds_all.map((d) => d.ecg.ventRate).sort((a, b) => a - b);
+  const sPR  = ds_all.map((d) => d.ecg.prInterval).sort((a, b) => a - b);
+  const sQRS = ds_all.map((d) => d.ecg.qrsInterval).sort((a, b) => a - b);
+  const sPA  = ds_all.map((d) => d.ecg.pAxis).sort((a, b) => a - b);
+  const sRA  = ds_all.map((d) => d.ecg.rAxis).sort((a, b) => a - b);
+  const sQTc = ds_all.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
+  const sTA  = ds_all.map((d) => d.ecg.tAxis).sort((a, b) => a - b);
+  const sAng = ds_all.map((d) => Math.abs(d.ecg.rAxis - d.ecg.tAxis)).sort((a, b) => a - b);
+
+  const sGlu = ds_all.map((d) => d.labs.glucose).sort((a, b) => a - b);
+  const sBUN = ds_all.map((d) => d.labs.nitrogen).sort((a, b) => a - b);
+  const sCr  = ds_all.map((d) => d.labs.creatinine).sort((a, b) => a - b);
+  const sEGF = ds_all.map((d) => d.labs.eGFR).sort((a, b) => a - b);
+  const sNa  = ds_all.map((d) => d.labs.sodium).sort((a, b) => a - b);
+  const sK   = ds_all.map((d) => d.labs.potassium).sort((a, b) => a - b);
+  const sCl  = ds_all.map((d) => d.labs.chloride).sort((a, b) => a - b);
+  const sCO2 = ds_all.map((d) => d.labs.carbonDioxide).sort((a, b) => a - b);
+  const sCa  = ds_all.map((d) => d.labs.calcium).sort((a, b) => a - b);
+
+  const ecgHues = [
+    percentile(ds.ecg.ventRate,                             sVR)  * 360,
+    percentile(ds.ecg.prInterval,                           sPR)  * 360,
+    percentile(ds.ecg.qrsInterval,                          sQRS) * 360,
+    percentile(ds.ecg.pAxis,                                sPA)  * 360,
+    percentile(ds.ecg.rAxis,                                sRA)  * 360,
+    percentile(ds.ecg.qtcInterval,                          sQTc) * 360,
+    percentile(ds.ecg.tAxis,                                sTA)  * 360,
+    percentile(Math.abs(ds.ecg.rAxis - ds.ecg.tAxis),       sAng) * 360,
+  ];
+
+  const labHues = [
+    percentile(ds.labs.glucose,       sGlu) * 360,
+    percentile(ds.labs.nitrogen,      sBUN) * 360,
+    percentile(ds.labs.creatinine,    sCr)  * 360,
+    percentile(ds.labs.eGFR,          sEGF) * 360,
+    percentile(ds.labs.sodium,        sNa)  * 360,
+    percentile(ds.labs.potassium,     sK)   * 360,
+    percentile(ds.labs.chloride,      sCl)  * 360,
+    percentile(ds.labs.carbonDioxide, sCO2) * 360,
+    percentile(ds.labs.calcium,       sCa)  * 360,
+  ];
+
+  const h1 = circularMeanHueDeg(ecgHues);
+  const h2 = circularMeanHueDeg(labHues);
+
+  return {
+    hex1: hsbToHex(h1 / 360, 0.80, 0.82),
+    hex2: hsbToHex(h2 / 360, 0.80, 0.82),
+  };
+}
+
 // ─── Piece metadata ────────────────────────────────────────────
 
 export interface PieceMeta {
   id: number;
   date: string;
   hex: string;
+  hex1: string;
+  hex2: string;
   hue: number;
   sat: number;
   bri: number;
@@ -112,10 +180,13 @@ export interface PieceMeta {
 export function getPieceMeta(id: number): PieceMeta {
   const ds = ds_all[id];
   const { hue, sat, bri } = computeHSBFromStats(ds, ds_all);
+  const { hex1, hex2 } = computePieceColors(id);
   return {
     id,
     date: ds.date,
     hex: hsbToHex(hue, Math.max(0.4, sat), Math.max(0.35, bri)),
+    hex1,
+    hex2,
     hue,
     sat,
     bri,
