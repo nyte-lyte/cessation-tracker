@@ -142,6 +142,10 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       pAxisPct:          u("u_pAxisPct"),
       rAxisPct:          u("u_rAxisPct"),
       tAxisPct:          u("u_tAxisPct"),
+      ventRatePct:       u("u_ventRatePct"),
+      prPct:             u("u_prPct"),
+      qrsPct:            u("u_qrsPct"),
+      qrsTAnglePct:      u("u_qrsTAnglePct"),
       qrsNorm:           u("u_qrsNorm"),
       prNorm:            u("u_prNorm"),
       ventRateNorm:      u("u_ventRateNorm"),
@@ -257,10 +261,14 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
     }
 
     // Pre-sorted values for percentile ranking (field hues)
-    const sortedQtcValues    = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
-    const sortedPAxisValues  = healthDataSets.map((d) => d.ecg.pAxis).sort((a, b) => a - b);
-    const sortedRAxisValues  = healthDataSets.map((d) => d.ecg.rAxis).sort((a, b) => a - b);
-    const sortedTAxisValues  = healthDataSets.map((d) => d.ecg.tAxis).sort((a, b) => a - b);
+    const sortedQtcValues       = healthDataSets.map((d) => d.ecg.qtcInterval).sort((a, b) => a - b);
+    const sortedPAxisValues     = healthDataSets.map((d) => d.ecg.pAxis).sort((a, b) => a - b);
+    const sortedRAxisValues     = healthDataSets.map((d) => d.ecg.rAxis).sort((a, b) => a - b);
+    const sortedTAxisValues     = healthDataSets.map((d) => d.ecg.tAxis).sort((a, b) => a - b);
+    const sortedVentRateValues  = healthDataSets.map((d) => d.ecg.ventRate).sort((a, b) => a - b);
+    const sortedPRValues        = healthDataSets.map((d) => d.ecg.prInterval).sort((a, b) => a - b);
+    const sortedQRSValues       = healthDataSets.map((d) => d.ecg.qrsInterval).sort((a, b) => a - b);
+    const sortedQRSTAngleValues = healthDataSets.map((d) => Math.abs(d.ecg.rAxis - d.ecg.tAxis)).sort((a, b) => a - b);
 
     // Beam phases — seeded from HASH (match main.js phaseSeed per beam)
     const phases = {
@@ -321,8 +329,9 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       const aPrNorm       = clamp(normalize(activeDs.ecg.prInterval,  minMaxValues.prInterval.min,  minMaxValues.prInterval.max),  0, 1);
       const aVentRateNorm = clamp(normalize(activeDs.ecg.ventRate,    minMaxValues.ventRate.min,    minMaxValues.ventRate.max),    0, 1);
       const aTAxisNorm    = clamp(normalize(activeDs.ecg.tAxis,       minMaxValues.tAxis.min,       minMaxValues.tAxis.max),       0, 1);
-      const aQrsNorm   = clamp(normalize(activeDs.ecg.qrsInterval, minMaxValues.qrsInterval.min, minMaxValues.qrsInterval.max), 0, 1);
-      const aQrsTAngle = clamp((Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis) - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
+      const aQrsNorm      = clamp(normalize(activeDs.ecg.qrsInterval, minMaxValues.qrsInterval.min, minMaxValues.qrsInterval.max), 0, 1);
+      const aRawQrsTAngle = Math.abs(activeDs.ecg.rAxis - activeDs.ecg.tAxis);
+      const aQrsTAngle    = clamp((aRawQrsTAngle - angMin) / Math.max(1e-6, angMax - angMin), 0, 1);
       const aBcRatio      = activeDs.labs.nitrogen / Math.max(0.1, activeDs.labs.creatinine);
       const aBunCreat     = clamp((aBcRatio - bcP05) / Math.max(1e-9, bcP95 - bcP05), 0, 1);
       // Per-frame beam values from activeDs
@@ -399,13 +408,21 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.qtcNorm)           gl.uniform1f(locs.qtcNorm, aQtcNorm);
       const aQtcPercentile = percentile(activeDs.ecg.qtcInterval, sortedQtcValues);
       if (locs.qtcPercentile)     gl.uniform1f(locs.qtcPercentile, aQtcPercentile);
-      const aPAxisPct = percentile(activeDs.ecg.pAxis, sortedPAxisValues);
-      const aRAxisPct = percentile(activeDs.ecg.rAxis, sortedRAxisValues);
-      const aTAxisPct = percentile(activeDs.ecg.tAxis, sortedTAxisValues);
-      if (locs.pAxisPct)     gl.uniform1f(locs.pAxisPct,    aPAxisPct);
-      if (locs.rAxisPct)     gl.uniform1f(locs.rAxisPct,    aRAxisPct);
-      if (locs.tAxisPct)     gl.uniform1f(locs.tAxisPct,    aTAxisPct);
-      if (locs.qrsNorm)      gl.uniform1f(locs.qrsNorm,     aQrsNorm);
+      const aPAxisPct     = percentile(activeDs.ecg.pAxis,       sortedPAxisValues);
+      const aRAxisPct     = percentile(activeDs.ecg.rAxis,       sortedRAxisValues);
+      const aTAxisPct     = percentile(activeDs.ecg.tAxis,       sortedTAxisValues);
+      const aVentRatePct  = percentile(activeDs.ecg.ventRate,    sortedVentRateValues);
+      const aPrPct        = percentile(activeDs.ecg.prInterval,  sortedPRValues);
+      const aQrsPct       = percentile(activeDs.ecg.qrsInterval, sortedQRSValues);
+      const aQrsTAnglePct = percentile(aRawQrsTAngle,            sortedQRSTAngleValues);
+      if (locs.pAxisPct)     gl.uniform1f(locs.pAxisPct,     aPAxisPct);
+      if (locs.rAxisPct)     gl.uniform1f(locs.rAxisPct,     aRAxisPct);
+      if (locs.tAxisPct)     gl.uniform1f(locs.tAxisPct,     aTAxisPct);
+      if (locs.ventRatePct)  gl.uniform1f(locs.ventRatePct,  aVentRatePct);
+      if (locs.prPct)        gl.uniform1f(locs.prPct,        aPrPct);
+      if (locs.qrsPct)       gl.uniform1f(locs.qrsPct,       aQrsPct);
+      if (locs.qrsTAnglePct) gl.uniform1f(locs.qrsTAnglePct, aQrsTAnglePct);
+      if (locs.qrsNorm)      gl.uniform1f(locs.qrsNorm,      aQrsNorm);
       if (locs.prNorm)       gl.uniform1f(locs.prNorm,      aPrNorm);
       if (locs.ventRateNorm) gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
       if (locs.tAxisNorm)    gl.uniform1f(locs.tAxisNorm,   aTAxisNorm);
