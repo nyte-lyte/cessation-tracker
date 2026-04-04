@@ -12,6 +12,7 @@ function Dot({ hex1, hex2 }: { hex1: string; hex2: string }) {
       background: `linear-gradient(90deg, ${hex1}, ${hex2})`,
       marginRight: 8,
       verticalAlign: "middle",
+      flexShrink: 0,
     }} />
   );
 }
@@ -23,21 +24,19 @@ export function PieceLink({ id, date, hex1, hex2, label }: { id: number; date: s
       href={`/piece/${id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        textDecoration: "none",
-        transition: "opacity 0.15s ease",
-        ...(hovered
-          ? {
-              background: `linear-gradient(90deg, ${hex1}, ${hex2})`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }
-          : { color: "var(--muted)" }),
-      }}
+      style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
     >
       <Dot hex1={hex1} hex2={hex2} />
-      {label ?? date}
+      <span
+        style={hovered ? {
+          background: `linear-gradient(90deg, ${hex1}, ${hex2})`,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        } : { color: "var(--muted)" }}
+      >
+        {label ?? date}
+      </span>
     </a>
   );
 }
