@@ -16,7 +16,7 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 600);
+    const check = () => setIsMobile(window.matchMedia("(pointer: coarse)").matches);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
