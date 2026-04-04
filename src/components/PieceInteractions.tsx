@@ -71,8 +71,8 @@ export default function PieceInteractions({ prevId, nextId }: PieceInteractionsP
       <button
         onClick={toggleFullscreen}
         title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-        className="hidden md:flex"
         style={{
+          display: isMobile ? "none" : "flex",
           position: "absolute",
           top: "12px",
           right: "12px",
