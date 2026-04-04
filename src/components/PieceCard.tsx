@@ -25,7 +25,7 @@ export default function PieceCard({ piece }: { piece: PieceMeta }) {
         <div
           style={{
             aspectRatio: "1 / 1",
-            background: `linear-gradient(135deg, ${piece.hex1}, ${piece.hex2})`,
+            background: `linear-gradient(90deg, ${piece.hex1}, ${piece.hex2})`,
           }}
         />
 
