@@ -147,6 +147,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       qrsPct:            u("u_qrsPct"),
       qrsTAnglePct:      u("u_qrsTAnglePct"),
       qrsNorm:           u("u_qrsNorm"),
+      co2Norm:           u("u_co2Norm"),
       prNorm:            u("u_prNorm"),
       ventRateNorm:      u("u_ventRateNorm"),
       tAxisNorm:         u("u_tAxisNorm"),
@@ -423,6 +424,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.qrsPct)       gl.uniform1f(locs.qrsPct,       aQrsPct);
       if (locs.qrsTAnglePct) gl.uniform1f(locs.qrsTAnglePct, aQrsTAnglePct);
       if (locs.qrsNorm)      gl.uniform1f(locs.qrsNorm,      aQrsNorm);
+      if (locs.co2Norm)      gl.uniform1f(locs.co2Norm,      clamp(normalize(activeDs.labs.carbonDioxide, minMaxValues.carbonDioxide.min, minMaxValues.carbonDioxide.max), 0, 1));
       if (locs.prNorm)       gl.uniform1f(locs.prNorm,      aPrNorm);
       if (locs.ventRateNorm) gl.uniform1f(locs.ventRateNorm, aVentRateNorm);
       if (locs.tAxisNorm)    gl.uniform1f(locs.tAxisNorm,   aTAxisNorm);
