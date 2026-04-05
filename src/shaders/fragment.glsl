@@ -56,6 +56,12 @@ uniform float u_qrsTAngle;   // QRS-T angle normalized 0..1 — electrical disso
 uniform float u_qrsNorm;     // QRS interval, min-max normalized 0..1 — depolarization width
 uniform float u_co2Norm;     // CO2/bicarbonate, min-max normalized 0..1 — acid-base balance
 
+// Percentile-ranked ECG hues — future-proof against outliers in any dataset past the first 29
+uniform float u_ventRatePct;
+uniform float u_prPct;
+uniform float u_qrsPct;
+uniform float u_qrsTAnglePct;
+
 // Wall-clock time in seconds — drives realtime form animation
 uniform float u_time;
 
@@ -188,14 +194,14 @@ void main(){
     float sSc  = 0.07;
 
     // Per-field hue angles (radians) — value × 360° + slow per-field drift
-    float hVR  = radians(mod(u_ventRateNorm     * 360. + t *  2.1, 360.));
-    float hPR  = radians(mod(u_prNorm           * 360. + t * -1.8, 360.));
-    float hQRS = radians(mod(u_qrsNorm          * 360. + t *  2.7, 360.));
-    float hPA  = radians(mod(u_pAxisPct         * 360. + t * -1.5, 360.));
-    float hRA  = radians(mod(u_rAxisPct         * 360. + t *  3.2, 360.));
-    float hQTc = radians(mod(u_qtcNorm          * 360. + t * -2.3, 360.));
-    float hTA  = radians(mod(u_tAxisPct         * 360. + t *  1.9, 360.));
-    float hAng = radians(mod(u_qrsTAngle        * 360. + t * -2.8, 360.));
+    float hVR  = radians(mod(u_ventRatePct      * 360. + t *  2.1, 360.));
+    float hPR  = radians(mod(u_prPct           * 360. + t * -1.8, 360.));
+    float hQRS = radians(mod(u_qrsPct          * 360. + t *  2.7, 360.));
+    float hPA  = radians(mod(u_pAxisPct        * 360. + t * -1.5, 360.));
+    float hRA  = radians(mod(u_rAxisPct        * 360. + t *  3.2, 360.));
+    float hQTc = radians(mod(u_qtcPercentile   * 360. + t * -2.3, 360.));
+    float hTA  = radians(mod(u_tAxisPct        * 360. + t *  1.9, 360.));
+    float hAng = radians(mod(u_qrsTAnglePct    * 360. + t * -2.8, 360.));
     float hGlu = radians(mod(u_glucose          * 360. + t *  1.4, 360.));
     float hBUN = radians(mod(u_nitrogenRadius   * 360. + t * -1.7, 360.));
     float hCr  = radians(mod(u_creatinineRadius * 360. + t *  2.4, 360.));
@@ -207,25 +213,25 @@ void main(){
     float hCa  = radians(mod(u_calciumRadius    * 360. + t *  1.2, 360.));
     float hInh = radians(u_inheritedHueDeg);
 
-    // Per-field sat: abnormality drives intensity (disease = vivid, normal = still)
-    // Per-field bri: each field's own value drives its brightness — shade variety across canvas
-    float sVR=0.70+0.30*abVR;   float bVR=0.35+0.60*u_ventRateNorm;
-    float sPR=0.70+0.30*abPR;   float bPR=0.35+0.60*u_prNorm;
-    float sQRS=0.70+0.30*abQRS; float bQRS=0.35+0.60*u_qrsNorm;
-    float sPA=0.70+0.30*abPA;   float bPA=0.35+0.60*u_pAxisNorm;
-    float sRA=0.70+0.30*abRA;   float bRA=0.35+0.60*u_rAxisNorm;
-    float sQTc=0.70+0.30*abQTc; float bQTc=0.35+0.60*u_qtcNorm;
-    float sTA=0.70+0.30*abTA;   float bTA=0.35+0.60*u_tAxisNorm;
-    float sAng=0.70+0.30*abAng; float bAng=0.35+0.60*u_qrsTAngle;
-    float sGlu=0.70+0.30*abGlu; float bGlu=0.35+0.60*u_glucose;
-    float sBUN=0.70+0.30*abBUN; float bBUN=0.35+0.60*u_nitrogenRadius;
-    float sCr=0.70+0.30*abCr;   float bCr=0.35+0.60*u_creatinineRadius;
-    float sEGF=0.70+0.30*abEGF; float bEGF=0.35+0.60*u_eGFR;
-    float sNa=0.70+0.30*abNa;   float bNa=0.35+0.60*u_sodiumRadius;
-    float sK=0.70+0.30*abK;     float bK=0.35+0.60*u_potassium;
-    float sChl=0.70+0.30*abCl;  float bChl=0.35+0.60*u_chlorideRadius;
-    float sCO2=0.70+0.30*abCO2; float bCO2=0.35+0.60*u_co2Norm;
-    float sCa=0.70+0.30*abCa;   float bCa=0.35+0.60*u_calciumRadius;
+    // Per-field sat: high baseline — vivid always, disease pushes to pure
+    // Per-field bri: modest floor drop for more depth without going too dark
+    float sVR=0.92+0.08*abVR;   float bVR=0.25+0.65*u_ventRateNorm;
+    float sPR=0.92+0.08*abPR;   float bPR=0.25+0.65*u_prNorm;
+    float sQRS=0.92+0.08*abQRS; float bQRS=0.25+0.65*u_qrsNorm;
+    float sPA=0.92+0.08*abPA;   float bPA=0.25+0.65*u_pAxisNorm;
+    float sRA=0.92+0.08*abRA;   float bRA=0.25+0.65*u_rAxisNorm;
+    float sQTc=0.92+0.08*abQTc; float bQTc=0.25+0.65*u_qtcNorm;
+    float sTA=0.92+0.08*abTA;   float bTA=0.25+0.65*u_tAxisNorm;
+    float sAng=0.92+0.08*abAng; float bAng=0.25+0.65*u_qrsTAngle;
+    float sGlu=0.92+0.08*abGlu; float bGlu=0.25+0.65*u_glucose;
+    float sBUN=0.92+0.08*abBUN; float bBUN=0.25+0.65*u_nitrogenRadius;
+    float sCr=0.92+0.08*abCr;   float bCr=0.25+0.65*u_creatinineRadius;
+    float sEGF=0.92+0.08*abEGF; float bEGF=0.25+0.65*u_eGFR;
+    float sNa=0.92+0.08*abNa;   float bNa=0.25+0.65*u_sodiumRadius;
+    float sK=0.92+0.08*abK;     float bK=0.25+0.65*u_potassium;
+    float sChl=0.92+0.08*abCl;  float bChl=0.25+0.65*u_chlorideRadius;
+    float sCO2=0.92+0.08*abCO2; float bCO2=0.25+0.65*u_co2Norm;
+    float sCa=0.92+0.08*abCa;   float bCa=0.25+0.65*u_calciumRadius;
     float sInh=0.72;             float bInh=0.52+0.28*u_eGFR;
 
     // Weighted average — normalized so canvas is always fully covered, no black corners
