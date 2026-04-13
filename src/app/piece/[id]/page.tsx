@@ -1,4 +1,5 @@
-import { getPieceMeta, getAllPieceMeta } from "@/lib/pieceUtils";
+import { getPieceMeta, getAllPieceMeta, computePartnerInheritedHueDeg, lifespanYearsFromHashDigits } from "@/lib/pieceUtils";
+import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
 import { notFound } from "next/navigation";
 import PieceViewer from "@/components/PieceViewer";
 import PieceInteractions from "@/components/PieceInteractions";
@@ -67,6 +68,10 @@ export default async function PiecePage({
   const all = getAllPieceMeta();
   const prev = id > 0 ? all[id - 1] : null;
   const next = id < all.length - 1 ? all[id + 1] : null;
+
+  const insc = PIECE_INSCRIPTIONS[id] ?? null;
+  const partnerInheritedHueDeg = computePartnerInheritedHueDeg(id);
+  const lifespanYears = insc ? lifespanYearsFromHashDigits(insc.hashTail) : null;
 
   // Read shaders server-side (avoids Turbopack raw-loader config)
   const shadersDir = path.join(process.cwd(), "src", "shaders");
@@ -142,7 +147,7 @@ export default async function PiecePage({
     <div className="piece-layout">
       {/* Canvas */}
       <div className="piece-canvas-wrap">
-        <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} />
+        <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} partnerInheritedHueDeg={partnerInheritedHueDeg} />
       </div>
 
       {/* Sidebar */}
@@ -256,8 +261,9 @@ export default async function PiecePage({
           </div>
         </div>
 
-        {/* Mint status — compact */}
-        <DataRow label="MINT STATUS" value="not yet minted" />
+        {/* Mint status */}
+        <DataRow label="MINT STATUS" value={insc ? "minted" : "not yet minted"} />
+        {insc && <DataRow label="INSCRIPTION" value={`${insc.inscriptionId.slice(0, 8)}...${insc.inscriptionId.slice(-4)}`} />}
 
         {/* ECG */}
         <div>
@@ -316,7 +322,9 @@ export default async function PiecePage({
           >
             LIFECYCLE
           </p>
-          <DataRow label="lifespan" value="—" />
+          <DataRow label="lifespan" value={lifespanYears ? `${lifespanYears.toFixed(1)} years` : "—"} />
+          {insc && <DataRow label="inscribed" value={new Date(insc.inscriptionUnix * 1000).toISOString().slice(0, 10)} />}
+          {insc && <DataRow label="block" value={insc.blockHeight.toLocaleString()} />}
         </div>
 
       </div>

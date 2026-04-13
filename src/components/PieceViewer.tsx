@@ -10,9 +10,11 @@ import {
   normalize,
   type HealthDataSet,
 } from "@/lib/pieceUtils";
+import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
 import { getAgedDataset, applyCollectionInfluence } from "@/data/decay_logic";
 
-const HASH = 88; // placeholder until mint
+const DEFAULT_HASH = 88;
+const DEFAULT_INSCRIPTION_UNIX = 1704067200;
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -86,9 +88,10 @@ interface PieceViewerProps {
   id: number;
   vertexSrc: string;
   fragmentSrc: string;
+  partnerInheritedHueDeg?: number;
 }
 
-export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerProps) {
+export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInheritedHueDeg = 0 }: PieceViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 
@@ -186,6 +189,11 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       partnerRGB: gl.getUniformLocation(program, "u_partnerRGB"),
     };
 
+    // Chain data — real values post-mint, defaults pre-mint
+    const insc = PIECE_INSCRIPTIONS[id];
+    const HASH = insc?.hashTail ?? DEFAULT_HASH;
+    const inscriptionUnix = insc?.inscriptionUnix ?? DEFAULT_INSCRIPTION_UNIX;
+
     // Dataset-derived constants
     const statics = computeStaticUniforms(id);
     const lifespanYears = lifespanYearsFromHashDigits(HASH);
@@ -281,7 +289,6 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       Ca:  0,
     };
 
-    const inscriptionUnix = 1704067200;
     const YEARS_PER_SEC = 1 / (365 * 24 * 3600);
     let lastT = performance.now() / 1000;
 
@@ -432,7 +439,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.inheritedHueDeg)     gl.uniform1f(locs.inheritedHueDeg, statics.u_inheritedHueDeg);
       if (locs.inheritedStrength)   gl.uniform1f(locs.inheritedStrength, inheritedStrength);
       if (locs.reanimationProgress) gl.uniform1f(locs.reanimationProgress, 0.0);
-      if (locs.partnerInheritedHue) gl.uniform1f(locs.partnerInheritedHue, 0.0);
+      if (locs.partnerInheritedHue) gl.uniform1f(locs.partnerInheritedHue, partnerInheritedHueDeg);
       if (locs.isLiberated)         gl.uniform1f(locs.isLiberated, 0.0);
       if (locs.voidProgress)        gl.uniform1f(locs.voidProgress, 0.0);
       if (locs.bunCreat)            gl.uniform1f(locs.bunCreat, aBunCreat);
@@ -461,7 +468,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       if (locs.co2RGB)  gl.uniform3fv(locs.co2RGB, hsbToRgb(co2Hue, 0.75, 1.00));
       if (locs.caRGB)   gl.uniform3fv(locs.caRGB,  hsbToRgb(caHue,  0.70, 0.95));
       if (locs.nirvanaRGB) gl.uniform3fv(locs.nirvanaRGB, hsbToRgb(statics.u_inheritedHueDeg, 0.85, 0.92));
-      if (locs.partnerRGB) gl.uniform3fv(locs.partnerRGB, hsbToRgb(0.0, 0.85, 0.92));
+      if (locs.partnerRGB) gl.uniform3fv(locs.partnerRGB, hsbToRgb(partnerInheritedHueDeg, 0.85, 0.92));
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -475,7 +482,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc }: PieceViewerP
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [id, vertexSrc, fragmentSrc]);
+  }, [id, vertexSrc, fragmentSrc, partnerInheritedHueDeg]);
 
   return (
     <canvas

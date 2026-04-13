@@ -90,9 +90,27 @@ export function lifespanYearsFromHashDigits(x: number): number {
   const n = x / 99;
   const offset = Math.pow(n, 2.5);
   let lifespan = 5 + offset * 35;
-  if (x < 5) lifespan = 5 + n * 10;
-  else if (x > 95) lifespan = 40 + n * 25;
+  if (x < 5) {
+    lifespan = 5 + n * 10;
+  } else if (x > 95) {
+    const base = 5 + Math.pow(95 / 99, 2.5) * 35; // ~36.6 — continuous at x=95
+    lifespan = base + ((x - 95) / 4) * (65 - base);
+  }
   return lifespan;
+}
+
+// Partner pairing: (0,1),(2,3),(4,5)... last piece is unpaired until its partner is inscribed.
+// Returns -1 if partner is out of bounds (currently unpaired).
+export function getPartnerIndex(id: number): number {
+  const p = id % 2 === 0 ? id + 1 : id - 1;
+  return p >= 0 && p < ds_all.length ? p : -1;
+}
+
+export function computePartnerInheritedHueDeg(id: number): number {
+  const partnerIdx = getPartnerIndex(id);
+  if (partnerIdx < 0) return 0;
+  // Partner's inherited hue = hue of the dataset immediately before the partner's own.
+  return computeHSBFromStats(ds_all[Math.max(0, partnerIdx - 1)], ds_all).hue * 360;
 }
 
 // ─── Two-color identity ───────────────────────────────────────
