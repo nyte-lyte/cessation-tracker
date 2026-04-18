@@ -87,16 +87,16 @@ export function normalize(value: number, min: number, max: number): number {
 }
 
 export function lifespanYearsFromHashDigits(x: number): number {
-  const n = x / 99;
-  const offset = Math.pow(n, 2.5);
-  let lifespan = 5 + offset * 35;
-  if (x < 5) {
-    lifespan = 5 + n * 10;
-  } else if (x > 95) {
-    const base = 5 + Math.pow(95 / 99, 2.5) * 35; // ~36.6 — continuous at x=95
-    lifespan = base + ((x - 95) / 4) * (65 - base);
+  // Triangular distribution: min=3, max=100, mode=28.
+  // Skews young — median ~42 years, long tail to 100.
+  const t = x / 99;
+  const a = 3, b = 100, c = 28;
+  const F_c = (c - a) / (b - a); // ~0.258
+  if (t <= F_c) {
+    return a + Math.sqrt(t * (b - a) * (c - a));
+  } else {
+    return b - Math.sqrt((1 - t) * (b - a) * (b - c));
   }
-  return lifespan;
 }
 
 // Partner pairing: (0,1),(2,3),(4,5)... last piece is unpaired until its partner is inscribed.
