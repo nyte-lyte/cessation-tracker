@@ -1,10 +1,7 @@
 // inscriptions.ts — Per-piece on-chain data, filled in after minting.
 // All values null until the piece is inscribed.
-// After minting each piece, update the corresponding entry with:
-//   inscriptionId: the txid+i0 string
-//   hashTail:      0-99, from the dist/cessation_piece_NN_metadata.json
-//   inscriptionUnix: Unix seconds, from the same metadata file
-//   blockHeight:   block height at inscription time
+// Synced from chain via ordinals.com /r/children, /r/inscription, /r/metadata
+// (CBOR-decoded). Re-run sync to pick up newly minted pieces.
 
 export interface PieceInscription {
   inscriptionId: string;
@@ -15,13 +12,48 @@ export interface PieceInscription {
 
 // Index matches piece index (0–28). null = not yet minted.
 export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
-  null, // piece 00 — 2018-07-16
-  null, // piece 01 — 2018-10-04
-  null, // piece 02 — 2019-01-24
-  null, // piece 03 — 2019-04-24
-  null, // piece 04 — 2019-07-31
-  null, // piece 05 — 2020-02-07
-  null, // piece 06 — 2020-02-28
+  {
+    inscriptionId: "a31a05eb1febd0d99ccadab3622641f3d80c7ecfbed5c39c7aa6a1ed080bccdci0",
+    hashTail: 51,
+    inscriptionUnix: 1780851771,
+    blockHeight: 952744,
+  }, // piece 00 — 2018-07-16
+  {
+    inscriptionId: "d5502e4bcf77add57998142435c748f9cc40cd15c405be1f1ed1dd299aa1c140i0",
+    hashTail: 29,
+    inscriptionUnix: 1780853110,
+    blockHeight: 952746,
+  }, // piece 01 — 2018-10-04
+  {
+    inscriptionId: "d85a9875d6e9d0bdba879268d1c3c790143b7ad281b83089305059e599cc5342i0",
+    hashTail: 60,
+    inscriptionUnix: 1780854786,
+    blockHeight: 952749,
+  }, // piece 02 — 2019-01-24
+  {
+    inscriptionId: "e2f54083f62791f35e82abe6a9206a01a8e0ed8fe7ce96c15ed683236a97e62ci0",
+    hashTail: 21,
+    inscriptionUnix: 1780864812,
+    blockHeight: 952762,
+  }, // piece 03 — 2019-04-24
+  {
+    inscriptionId: "5b6613703551ebc94cd90c2c1a3b90ee42f252861dbda278c6ac18d1cb06258ei0",
+    hashTail: 81,
+    inscriptionUnix: 1780865859,
+    blockHeight: 952765,
+  }, // piece 04 — 2019-07-31
+  {
+    inscriptionId: "9f848ac9a5dba102dd3415d42dce0864bbc408145d14fbdd733df6c3b1ad1a21i0",
+    hashTail: 76,
+    inscriptionUnix: 1780866591,
+    blockHeight: 952767,
+  }, // piece 05 — 2020-02-07
+  {
+    inscriptionId: "b22da7d2e0fc13e8537d64309208c142fc61158a5d41efdf0951c374d630ee8ei0",
+    hashTail: 42,
+    inscriptionUnix: 1780868047,
+    blockHeight: 952769,
+  }, // piece 06 — 2020-02-28
   null, // piece 07 — 2020-03-13
   null, // piece 08 — 2020-05-22
   null, // piece 09 — 2020-08-11
@@ -46,4 +78,5 @@ export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
   null, // piece 28 — 2026-03-20
 ];
 
-export const ENGINE_INSCRIPTION_ID: string | null = null;
+export const ENGINE_INSCRIPTION_ID: string | null =
+  "b725884c8a6d63c2499c0f86b8e5863115808f8998697ba23abc0194b8c3323ei0";
