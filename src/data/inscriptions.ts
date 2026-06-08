@@ -144,13 +144,48 @@ export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
     inscriptionUnix: 1780898132,
     blockHeight: 952808,
   }, // piece 21 — 2024-06-10
-  null, // piece 22 — 2024-09-16
-  null, // piece 23 — 2024-12-30
-  null, // piece 24 — 2025-03-26
-  null, // piece 25 — 2025-06-18
-  null, // piece 26 — 2025-09-12
-  null, // piece 27 — 2025-12-11
-  null, // piece 28 — 2026-03-20
+  {
+    inscriptionId: "51b2758e7a05fe8184e7d1b86bf285619c4346c3a030fe93c66594fea7ccb684i0",
+    hashTail: 16,
+    inscriptionUnix: 1780899111,
+    blockHeight: 952810,
+  }, // piece 22 — 2024-09-16
+  {
+    inscriptionId: "3d4dfad889b02a9e435919551ca548c681f09febca5b7d9bb3f48c081b61c9e1i0",
+    hashTail: 9,
+    inscriptionUnix: 1780899973,
+    blockHeight: 952813,
+  }, // piece 23 — 2024-12-30
+  {
+    inscriptionId: "4433131c7e278d89b60a8c12bcc1ca8815fc7b699705422d11dd6d45faca793ei0",
+    hashTail: 66,
+    inscriptionUnix: 1780901092,
+    blockHeight: 952815,
+  }, // piece 24 — 2025-03-26
+  {
+    inscriptionId: "448c7a32883fffecda5c3ee573e3a3e6ac1ecc8a9f1dfe5b0faedd234d4b248ci0",
+    hashTail: 79,
+    inscriptionUnix: 1780902895,
+    blockHeight: 952817,
+  }, // piece 25 — 2025-06-18
+  {
+    inscriptionId: "b528a793005c86de767cc1210f392fb4b8701e9f95beee6271a7f2d2f7ac5369i0",
+    hashTail: 5,
+    inscriptionUnix: 1780903858,
+    blockHeight: 952821,
+  }, // piece 26 — 2025-09-12
+  {
+    inscriptionId: "d103f3818034de12e1720f29a981ec8fa5a33d973d716a5c850d8d9eed28ff88i0",
+    hashTail: 67,
+    inscriptionUnix: 1780907945,
+    blockHeight: 952827,
+  }, // piece 27 — 2025-12-11
+  {
+    inscriptionId: "fef5a22d11198dbf495f76d1f6aaa5523ba8ebcd14c567dc3f8395f3617e2953i0",
+    hashTail: 60,
+    inscriptionUnix: 1780910280,
+    blockHeight: 952829,
+  }, // piece 28 — 2026-03-20
 ];
 
 export const ENGINE_INSCRIPTION_ID: string | null =
