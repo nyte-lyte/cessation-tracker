@@ -239,9 +239,13 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
     let drawCollection: HealthDataSet[] = healthDataSets;
     let labSorted: Record<string, number[]> = computeLabSorted(drawCollection);
 
-    if (ENGINE_INSCRIPTION_ID) {
+    // Only swap to the live collection for minted pieces — on-chain, a piece can
+    // only ever run after it's inscribed, so it's guaranteed to be a member of its
+    // own sibling collection (id < length always holds there). Not-yet-minted pieces
+    // render in local preview mode against the static set, which always covers id 0–28.
+    if (ENGINE_INSCRIPTION_ID && insc) {
       fetchLiveCollection(ENGINE_INSCRIPTION_ID).then((live) => {
-        if (!live || live.length === 0) return;
+        if (!live || live.length === 0 || id >= live.length) return;
         drawCollection = live;
         labSorted = computeLabSorted(drawCollection);
         // Mutate in place — minMaxValues is a shared imported binding (mirrors main.js refreshMinMaxValues)
