@@ -8,21 +8,10 @@ import {
   computeStaticUniforms,
   lifespanYearsFromHashDigits,
   normalize,
-  fetchLiveCollection,
   type HealthDataSet,
 } from "@/lib/pieceUtils";
-import { PIECE_INSCRIPTIONS, ENGINE_INSCRIPTION_ID } from "@/data/inscriptions";
-import { getAgedDataset, applyCollectionInfluence, computeMinMaxValues } from "@/data/decay_logic";
-
-const LAB_KEYS = ["nitrogen", "creatinine", "sodium", "chloride", "carbonDioxide", "calcium"] as const;
-
-function computeLabSorted(datasets: HealthDataSet[]): Record<string, number[]> {
-  const out: Record<string, number[]> = {};
-  for (const key of LAB_KEYS) {
-    out[key] = datasets.map((d) => (d.labs as Record<string, number>)[key]).sort((a, b) => a - b);
-  }
-  return out;
-}
+import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
+import { getAgedDataset, applyCollectionInfluence } from "@/data/decay_logic";
 
 const DEFAULT_HASH = 88;
 const DEFAULT_INSCRIPTION_UNIX = 1704067200;
@@ -233,24 +222,9 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
     const sortedNitrogen   = healthDataSets.map((d) => d.labs.nitrogen).sort((a, b) => a - b);
     const sortedEGFR       = healthDataSets.map((d) => d.labs.eGFR).sort((a, b) => a - b);
     const sortedPotassium  = healthDataSets.map((d) => d.labs.potassium).sort((a, b) => a - b);
-    // Live sibling collection — pieces influence each other on-chain (collection
-    // influence + chronological drift). Starts as the static 29-piece set and is
-    // replaced once the live collection is fetched, mirroring main.js's drawCollection.
-    let drawCollection: HealthDataSet[] = healthDataSets;
-    let labSorted: Record<string, number[]> = computeLabSorted(drawCollection);
-
-    if (ENGINE_INSCRIPTION_ID) {
-      fetchLiveCollection(ENGINE_INSCRIPTION_ID).then((live) => {
-        if (!live || live.length === 0) return;
-        drawCollection = live;
-        labSorted = computeLabSorted(drawCollection);
-        // Mutate in place — minMaxValues is a shared imported binding (mirrors main.js refreshMinMaxValues)
-        const fresh = computeMinMaxValues(drawCollection) as Record<string, { min: number; max: number }>;
-        const mm = minMaxValues as unknown as Record<string, { min: number; max: number }>;
-        for (const key of Object.keys(fresh)) {
-          if (mm[key]) { mm[key].min = fresh[key].min; mm[key].max = fresh[key].max; }
-        }
-      });
+    const labSorted: Record<string, number[]> = {};
+    for (const key of ["nitrogen","creatinine","sodium","chloride","carbonDioxide","calcium"]) {
+      labSorted[key] = healthDataSets.map((d) => (d.labs as Record<string,number>)[key]).sort((a,b) => a-b);
     }
 
     // Pure helper functions (no ds closure)
@@ -350,16 +324,13 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
       const lifeFraction = clamp(totalYears / lifespanYears, 0, 1);
       const inheritedStrength = Math.pow(Math.max(0, 1 - lifeFraction), 0.7);
 
-      // Chronological drift + systemic influence — matches main.js activeDataSet.
-      // drawCollection is the live sibling collection once fetched (collection
-      // influence: pieces pull on each other on-chain), else the static 29-piece set.
+      // Chronological drift + systemic influence — matches main.js activeDataSet
       const activeDs = applyCollectionInfluence(
-        getAgedDataset(id, lifeFraction, drawCollection, minMaxValues) as HealthDataSet,
-        drawCollection,
-        lifeFraction,
-        minMaxValues
-      ) as HealthDataSet;
-      const { hue: aHue, sat: aSat, bri: aBri } = computeHSBFromStats(activeDs, drawCollection);
+        getAgedDataset(id, lifeFraction, healthDataSets),
+        healthDataSets,
+        lifeFraction
+      );
+      const { hue: aHue, sat: aSat, bri: aBri } = computeHSBFromStats(activeDs, healthDataSets);
       const aPAxisNorm    = clamp(normalize(activeDs.ecg.pAxis,       minMaxValues.pAxis.min,       minMaxValues.pAxis.max),       0, 1);
       const aRAxisNorm    = clamp(normalize(activeDs.ecg.rAxis,       minMaxValues.rAxis.min,       minMaxValues.rAxis.max),       0, 1);
       const aQtcNorm      = clamp(normalize(activeDs.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max), 0, 1);
