@@ -273,7 +273,7 @@ export default async function PiecePage({
         </div>
 
         {/* Mint status */}
-        <DataRow label="MINT STATUS" value={insc ? "minted" : "not yet minted"} />
+        <DataRow label="MINT STATUS" value={insc ? "minted" : "available"} />
         {insc && (
           <DataRow
             label="INSCRIPTION"
@@ -341,7 +341,7 @@ export default async function PiecePage({
           </p>
           <DataRow label="lifespan" value={lifespanYears ? `${lifespanYears.toFixed(1)} years` : "—"} />
           {insc && <DataRow label="inscribed" value={new Date(insc.inscriptionUnix * 1000).toISOString().slice(0, 10)} />}
-          {insc && <DataRow label="block" value={insc.blockHeight.toLocaleString()} />}
+          {insc && <DataRow label="block" value={insc.blockHeight} />}
         </div>
 
       </div>
