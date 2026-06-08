@@ -54,12 +54,42 @@ export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
     inscriptionUnix: 1780868047,
     blockHeight: 952769,
   }, // piece 06 — 2020-02-28
-  null, // piece 07 — 2020-03-13
-  null, // piece 08 — 2020-05-22
-  null, // piece 09 — 2020-08-11
-  null, // piece 10 — 2020-11-12
-  null, // piece 11 — 2021-02-24
-  null, // piece 12 — 2021-09-01
+  {
+    inscriptionId: "23db5688180d5ed9d2d417b1303dab93fcd8c378bdd7cff54450c40499429837i0",
+    hashTail: 57,
+    inscriptionUnix: 1780870406,
+    blockHeight: 952771,
+  }, // piece 07 — 2020-03-13
+  {
+    inscriptionId: "1108b9c25aab94d053e5e909fc90c577b6eb95a4574031bfb6abee652c4a1236i0",
+    hashTail: 58,
+    inscriptionUnix: 1780873095,
+    blockHeight: 952774,
+  }, // piece 08 — 2020-05-22
+  {
+    inscriptionId: "1727e0287ac65671ee58c9f9cd6e5125db126a90d873c8483a6296a59dea8c8ai0",
+    hashTail: 22,
+    inscriptionUnix: 1780873497,
+    blockHeight: 952777,
+  }, // piece 09 — 2020-08-11
+  {
+    inscriptionId: "8394f1e380a0bccf2207cc8ad76e5b6977a63319009f092dd20751666ea01d3di0",
+    hashTail: 74,
+    inscriptionUnix: 1780875295,
+    blockHeight: 952781,
+  }, // piece 10 — 2020-11-12
+  {
+    inscriptionId: "dc5a618e5f7ea851f907744a9c3296bc53371dbd5cbfcd38f5d3d29e85ef1a50i0",
+    hashTail: 59,
+    inscriptionUnix: 1780878813,
+    blockHeight: 952787,
+  }, // piece 11 — 2021-02-24
+  {
+    inscriptionId: "bd3862161dd030a7030e7cc900099e99304e82284f657dd57023410a1f80f277i0",
+    hashTail: 73,
+    inscriptionUnix: 1780880962,
+    blockHeight: 952790,
+  }, // piece 12 — 2021-09-01
   null, // piece 13 — 2021-12-01
   null, // piece 14 — 2022-02-14
   null, // piece 15 — 2022-05-13
