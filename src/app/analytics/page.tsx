@@ -1,7 +1,33 @@
-import { getAllPieceMeta, healthDataSets } from "@/lib/pieceUtils";
-import { minMaxValues } from "@/data/health_data_sets";
+import { getAllPieceMeta, healthDataSets, fetchLiveCollection, type HealthDataSet } from "@/lib/pieceUtils";
+import { minMaxValues as staticMinMaxValues } from "@/data/health_data_sets";
 import { computeKarma, blendDatasets, computeLiberationThreshold } from "@/data/decay_logic";
+import { ENGINE_INSCRIPTION_ID } from "@/data/inscriptions";
 import { PieceLink } from "@/components/PieceLink";
+
+// Karma and the liberation threshold are explicitly designed to shift as the
+// collection lives and grows — so this page pulls the live sibling collection
+// once a day (ISR) rather than computing purely from the frozen genesis snapshot.
+export const revalidate = 86400;
+
+const ECG_KEYS = ["ventRate", "prInterval", "qrsInterval", "qtInterval", "qtcInterval", "pAxis", "rAxis", "tAxis"] as const;
+const LAB_KEYS = ["glucose", "nitrogen", "creatinine", "eGFR", "sodium", "potassium", "chloride", "carbonDioxide", "calcium"] as const;
+
+function computeMinMaxValues(allDatasets: HealthDataSet[]) {
+  const result: Record<string, { min: number; max: number }> = {};
+  for (const k of ECG_KEYS) result[k] = { min: Infinity, max: -Infinity };
+  for (const k of LAB_KEYS) result[k] = { min: Infinity, max: -Infinity };
+  for (const d of allDatasets) {
+    for (const k of ECG_KEYS) {
+      result[k].min = Math.min(result[k].min, d.ecg[k]);
+      result[k].max = Math.max(result[k].max, d.ecg[k]);
+    }
+    for (const k of LAB_KEYS) {
+      result[k].min = Math.min(result[k].min, d.labs[k]);
+      result[k].max = Math.max(result[k].max, d.labs[k]);
+    }
+  }
+  return result;
+}
 
 function Row({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -74,9 +100,17 @@ function HealthIndexChart({ pieces }: { pieces: ReturnType<typeof getAllPieceMet
   );
 }
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
   const pieces = getAllPieceMeta();
-  const ds = healthDataSets;
+
+  // Karma/threshold genuinely shift as the collection lives and grows — pull
+  // each minted piece's current on-chain dataset (drifted + collection-influenced)
+  // and recompute minMaxValues from it. Pieces not yet minted keep their genesis
+  // baseline. Falls back to the static collection if the chain fetch fails.
+  const live = ENGINE_INSCRIPTION_ID ? await fetchLiveCollection(ENGINE_INSCRIPTION_ID) : null;
+  const ds = live ? healthDataSets.map((staticDs, i) => (i < live.length ? live[i] : staticDs)) : healthDataSets;
+  const minMaxValues = live ? computeMinMaxValues(ds) : staticMinMaxValues;
+
   const threshold = computeLiberationThreshold(ds, minMaxValues);
 
   // Karma per piece
