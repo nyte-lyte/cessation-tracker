@@ -90,15 +90,60 @@ export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
     inscriptionUnix: 1780880962,
     blockHeight: 952790,
   }, // piece 12 — 2021-09-01
-  null, // piece 13 — 2021-12-01
-  null, // piece 14 — 2022-02-14
-  null, // piece 15 — 2022-05-13
-  null, // piece 16 — 2022-08-25
-  null, // piece 17 — 2023-06-12
-  null, // piece 18 — 2023-09-05
-  null, // piece 19 — 2023-12-05
-  null, // piece 20 — 2024-02-05
-  null, // piece 21 — 2024-06-10
+  {
+    inscriptionId: "5c16124203c90ae78c6a22cb530f9b1653c377fdb10515d3450fcd867ef07b9bi0",
+    hashTail: 58,
+    inscriptionUnix: 1780883403,
+    blockHeight: 952792,
+  }, // piece 13 — 2021-12-01
+  {
+    inscriptionId: "b521c31069391559ab414d5b372b7903c10760999ee9c8e354bae395541ae714i0",
+    hashTail: 15,
+    inscriptionUnix: 1780885373,
+    blockHeight: 952794,
+  }, // piece 14 — 2022-02-14
+  {
+    inscriptionId: "28e6b0ff623a4d3b4786e43c07182b71bfc009d5a79e4c712d8d4a3df7b4a431i0",
+    hashTail: 42,
+    inscriptionUnix: 1780886934,
+    blockHeight: 952796,
+  }, // piece 15 — 2022-05-13
+  {
+    inscriptionId: "b6276e7b8d88bb1531e65a4f551ae3f9c4c56253f700c5a1a687474d345b68a1i0",
+    hashTail: 49,
+    inscriptionUnix: 1780888133,
+    blockHeight: 952798,
+  }, // piece 16 — 2022-08-25
+  {
+    inscriptionId: "5127716c7d315b36fc32261ca7ef49a294d235ab2316b7f832330c1c8ec5bbcci0",
+    hashTail: 82,
+    inscriptionUnix: 1780892165,
+    blockHeight: 952800,
+  }, // piece 17 — 2023-06-12
+  {
+    inscriptionId: "2f2a1417efa70c576c2853f751f8591368c96384a257d1a5e3f16d03cdaea3eci0",
+    hashTail: 58,
+    inscriptionUnix: 1780893567,
+    blockHeight: 952802,
+  }, // piece 18 — 2023-09-05
+  {
+    inscriptionId: "282c8fa7febb368a718070f22b1c8052e3f0cea09d96095a29f7c2db2364646ci0",
+    hashTail: 34,
+    inscriptionUnix: 1780894802,
+    blockHeight: 952804,
+  }, // piece 19 — 2023-12-05
+  {
+    inscriptionId: "1c1e15ef82e2a11c4f505c96932ff662d5f0e37e45d593ee8492337ef24bd8f9i0",
+    hashTail: 4,
+    inscriptionUnix: 1780895440,
+    blockHeight: 952806,
+  }, // piece 20 — 2024-02-05
+  {
+    inscriptionId: "d6bf59fd32f3a44303913dce5e5e5074a97c6d1fec0d7bb9bf8e92b6b70115f3i0",
+    hashTail: 66,
+    inscriptionUnix: 1780898132,
+    blockHeight: 952808,
+  }, // piece 21 — 2024-06-10
   null, // piece 22 — 2024-09-16
   null, // piece 23 — 2024-12-30
   null, // piece 24 — 2025-03-26

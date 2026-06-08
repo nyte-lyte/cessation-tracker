@@ -39,7 +39,7 @@ export function generateStaticParams() {
   return getAllPieceMeta().map((p) => ({ id: String(p.id) }));
 }
 
-function DataRow({ label, value }: { label: string; value: string | number }) {
+function DataRow({ label, value, href }: { label: string; value: string | number; href?: string }) {
   return (
     <div
       style={{
@@ -50,7 +50,18 @@ function DataRow({ label, value }: { label: string; value: string | number }) {
       }}
     >
       <span style={{ color: "var(--muted)" }}>{label}</span>
-      <span style={{ color: "var(--foreground)" }}>{value}</span>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--foreground)", textDecoration: "underline" }}
+        >
+          {value}
+        </a>
+      ) : (
+        <span style={{ color: "var(--foreground)" }}>{value}</span>
+      )}
     </div>
   );
 }
@@ -263,7 +274,13 @@ export default async function PiecePage({
 
         {/* Mint status */}
         <DataRow label="MINT STATUS" value={insc ? "minted" : "not yet minted"} />
-        {insc && <DataRow label="INSCRIPTION" value={`${insc.inscriptionId.slice(0, 8)}...${insc.inscriptionId.slice(-4)}`} />}
+        {insc && (
+          <DataRow
+            label="INSCRIPTION"
+            value={`${insc.inscriptionId.slice(0, 8)}...${insc.inscriptionId.slice(-4)}`}
+            href={`https://ordinals.com/inscription/${insc.inscriptionId}`}
+          />
+        )}
 
         {/* ECG */}
         <div>
