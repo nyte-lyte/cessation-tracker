@@ -90,7 +90,12 @@ export const PIECE_INSCRIPTIONS: (PieceInscription | null)[] = [
     inscriptionUnix: 1780880962,
     blockHeight: 952790,
   }, // piece 12 — 2021-09-01
-  null, // piece 13 — 2021-12-01
+  {
+    inscriptionId: "5c16124203c90ae78c6a22cb530f9b1653c377fdb10515d3450fcd867ef07b9bi0",
+    hashTail: 58,
+    inscriptionUnix: 1780883403,
+    blockHeight: 952792,
+  }, // piece 13 — 2021-12-01
   null, // piece 14 — 2022-02-14
   null, // piece 15 — 2022-05-13
   null, // piece 16 — 2022-08-25
