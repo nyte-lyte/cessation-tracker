@@ -273,7 +273,7 @@ export default async function PiecePage({
         </div>
 
         {/* Mint status */}
-        <DataRow label="MINT STATUS" value={insc ? "minted" : "available"} />
+        <DataRow label="MINT STATUS" value="available" />
         {insc && (
           <DataRow
             label="INSCRIPTION"
