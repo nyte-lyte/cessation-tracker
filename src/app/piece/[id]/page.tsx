@@ -2,7 +2,6 @@ import { getPieceMeta, getAllPieceMeta, lifespanYearsFromHashDigits } from "@/li
 import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
 import { notFound } from "next/navigation";
 import PieceInteractions from "@/components/PieceInteractions";
-import PieceIframe from "@/components/PieceIframe";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -151,9 +150,11 @@ export default async function PiecePage({
       {/* Canvas */}
       <div className="piece-canvas-wrap">
         {insc ? (
-          <PieceIframe
+          <iframe
             src={`https://ordinals.com/content/${insc.inscriptionId}`}
             title={`cessation piece ${String(id).padStart(2, "0")}`}
+            allow="fullscreen"
+            style={{ display: "block", aspectRatio: "3 / 2", maxWidth: "100%", maxHeight: "100%", border: "none" }}
           />
         ) : null}
       </div>
