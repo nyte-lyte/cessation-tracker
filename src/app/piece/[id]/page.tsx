@@ -1,11 +1,8 @@
-import { getPieceMeta, getAllPieceMeta, computePartnerInheritedHueDeg, lifespanYearsFromHashDigits } from "@/lib/pieceUtils";
+import { getPieceMeta, getAllPieceMeta, lifespanYearsFromHashDigits } from "@/lib/pieceUtils";
 import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
 import { notFound } from "next/navigation";
-import PieceViewer from "@/components/PieceViewer";
 import PieceInteractions from "@/components/PieceInteractions";
 import Link from "next/link";
-import { readFileSync } from "fs";
-import path from "path";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -81,13 +78,7 @@ export default async function PiecePage({
   const next = id < all.length - 1 ? all[id + 1] : null;
 
   const insc = PIECE_INSCRIPTIONS[id] ?? null;
-  const partnerInheritedHueDeg = computePartnerInheritedHueDeg(id);
   const lifespanYears = insc ? lifespanYearsFromHashDigits(insc.hashTail) : null;
-
-  // Read shaders server-side (avoids Turbopack raw-loader config)
-  const shadersDir = path.join(process.cwd(), "src", "shaders");
-  const vertexSrc = readFileSync(path.join(shadersDir, "vertex.glsl"), "utf8");
-  const fragmentSrc = readFileSync(path.join(shadersDir, "fragment.glsl"), "utf8");
 
   return (
     <>
@@ -158,7 +149,14 @@ export default async function PiecePage({
     <div className="piece-layout">
       {/* Canvas */}
       <div className="piece-canvas-wrap">
-        <PieceViewer id={id} vertexSrc={vertexSrc} fragmentSrc={fragmentSrc} partnerInheritedHueDeg={partnerInheritedHueDeg} />
+        {insc ? (
+          <iframe
+            src={`https://ordinals.com/content/${insc.inscriptionId}`}
+            style={{ display: "block", aspectRatio: "3 / 2", maxWidth: "100%", maxHeight: "100%", border: "none" }}
+            allow="fullscreen"
+            title={`cessation piece ${String(id).padStart(2, "0")}`}
+          />
+        ) : null}
       </div>
 
       {/* Sidebar */}
