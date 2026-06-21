@@ -13,7 +13,7 @@ export default function PieceIframe({ src, title }: { src: string; title: string
           display: "flex", alignItems: "center", justifyContent: "center",
           color: "var(--muted)", fontSize: "11px", letterSpacing: "0.12em",
         }}>
-          loading
+          fetching from blockchain
         </div>
       )}
       <iframe
