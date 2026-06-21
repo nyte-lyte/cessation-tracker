@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const MIN_LOADING_MS = 4000;
 
 export default function PieceIframe({ src, title }: { src: string; title: string }) {
-  const [loaded, setLoaded] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [minElapsed, setMinElapsed] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), MIN_LOADING_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showContent = iframeLoaded && minElapsed;
 
   return (
     <div style={{ position: "relative", aspectRatio: "3 / 2", maxWidth: "100%", maxHeight: "100%" }}>
-      {!loaded && (
+      {!showContent && (
         <div style={{
           position: "absolute", inset: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -19,11 +29,11 @@ export default function PieceIframe({ src, title }: { src: string; title: string
       <iframe
         src={src}
         title={title}
-        onLoad={() => setLoaded(true)}
+        onLoad={() => setIframeLoaded(true)}
         allow="fullscreen"
         style={{
           display: "block", width: "100%", height: "100%", border: "none",
-          opacity: loaded ? 1 : 0, transition: "opacity 0.4s ease",
+          opacity: showContent ? 1 : 0, transition: "opacity 0.6s ease",
         }}
       />
     </div>
