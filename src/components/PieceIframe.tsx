@@ -16,7 +16,7 @@ export default function PieceIframe({ src, title }: { src: string; title: string
   const showContent = iframeLoaded && minElapsed;
 
   return (
-    <div style={{ position: "relative", aspectRatio: "3 / 2", width: "100%", maxWidth: "100%", maxHeight: "100%" }}>
+    <div style={{ position: "relative", aspectRatio: "3 / 2", maxWidth: "100%", maxHeight: "100%" }}>
       {!showContent && (
         <div style={{
           position: "absolute", inset: 0,
