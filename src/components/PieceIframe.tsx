@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const MIN_LOADING_MS = 4000;
+const MIN_LOADING_MS = 15000;
 
 export default function PieceIframe({ src, title }: { src: string; title: string }) {
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -21,7 +21,7 @@ export default function PieceIframe({ src, title }: { src: string; title: string
         <div style={{
           position: "absolute", inset: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: "var(--muted)", fontSize: "11px", letterSpacing: "0.12em",
+          color: "var(--foreground)", fontSize: "13px", letterSpacing: "0.12em",
         }}>
           fetching from blockchain
         </div>
