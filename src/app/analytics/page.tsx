@@ -1,6 +1,9 @@
-import { getAllPieceMeta, healthDataSets, fetchLiveCollection, type HealthDataSet } from "@/lib/pieceUtils";
+import { getAllPieceMeta, healthDataSets, fetchLiveCollection } from "@/lib/pieceUtils";
 import { minMaxValues as staticMinMaxValues } from "@/data/health_data_sets";
-import { computeKarma, blendDatasets, computeLiberationThreshold } from "@/data/decay_logic";
+import {
+  computeKarma, blendDatasets, computeLiberationThreshold, computeMinMaxValues,
+  karmaClearanceRate, remainingKarma,
+} from "@/data/decay_logic";
 import { ENGINE_INSCRIPTION_ID } from "@/data/inscriptions";
 import { PieceLink } from "@/components/PieceLink";
 
@@ -9,26 +12,8 @@ import { PieceLink } from "@/components/PieceLink";
 // once a day (ISR) rather than computing purely from the frozen genesis snapshot.
 export const revalidate = 86400;
 
-const ECG_KEYS = ["ventRate", "prInterval", "qrsInterval", "qtInterval", "qtcInterval", "pAxis", "rAxis", "tAxis"] as const;
-const LAB_KEYS = ["glucose", "nitrogen", "creatinine", "eGFR", "sodium", "potassium", "chloride", "carbonDioxide", "calcium"] as const;
-
-function computeMinMaxValues(allDatasets: HealthDataSet[]) {
-  const result: Record<string, { min: number; max: number }> = {};
-  for (const k of ECG_KEYS) result[k] = { min: Infinity, max: -Infinity };
-  for (const k of LAB_KEYS) result[k] = { min: Infinity, max: -Infinity };
-  for (const d of allDatasets) {
-    for (const k of ECG_KEYS) {
-      result[k].min = Math.min(result[k].min, d.ecg[k]);
-      result[k].max = Math.max(result[k].max, d.ecg[k]);
-    }
-    for (const k of LAB_KEYS) {
-      result[k].min = Math.min(result[k].min, d.labs[k]);
-      result[k].max = Math.max(result[k].max, d.labs[k]);
-    }
-  }
-  return result;
-}
-
+// computeMinMaxValues now comes from decay_logic — a local duplicate lived here and
+// had already drifted from the engine's version.
 function Row({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
     <div style={{
@@ -117,17 +102,30 @@ export default async function AnalyticsPage() {
   const karmas = ds.map((d) => computeKarma(d, minMaxValues));
 
   // Pairs: (0,1), (2,3), ...
-  const pairs: { a: number; b: number | null; karma: number | null; belowThreshold: boolean }[] = [];
+  // A single blend no longer decides anything. Karma clears across rebirths at each
+  // piece's own eGFR, so a pair above the threshold today still reaches liberation —
+  // it just takes more lifespans. Reporting "above threshold" as a status read as a
+  // verdict of never, which was wrong for 10 of 15 pairs. Report the number of cycles
+  // instead, simulated the way the engine does it.
+  const CYCLE_CAP = 400;
+  const pairs: { a: number; b: number | null; karma: number | null; cycles: number | null }[] = [];
   for (let i = 0; i + 1 < ds.length; i += 2) {
-    const blended = blendDatasets(ds[i], ds[i + 1]);
-    const k = computeKarma(blended, minMaxValues);
-    pairs.push({ a: i, b: i + 1, karma: k, belowThreshold: k < threshold });
+    const k = computeKarma(blendDatasets(ds[i], ds[i + 1], minMaxValues), minMaxValues);
+    let cur = ds[i];
+    let uncleared = 1;
+    let cycles: number | null = null;
+    for (let n = 1; n <= CYCLE_CAP; n++) {
+      cur = blendDatasets(cur, ds[i + 1], minMaxValues);
+      uncleared *= 1 - karmaClearanceRate(cur, minMaxValues);
+      if (remainingKarma(cur, uncleared, minMaxValues) < threshold) { cycles = n; break; }
+    }
+    pairs.push({ a: i, b: i + 1, karma: k, cycles });
   }
 
   // Odd final piece — awaiting partner
   const hasSolo = ds.length % 2 !== 0;
   if (hasSolo) {
-    pairs.push({ a: ds.length - 1, b: null, karma: null, belowThreshold: false });
+    pairs.push({ a: ds.length - 1, b: null, karma: null, cycles: null });
   }
 
 
@@ -139,7 +137,13 @@ export default async function AnalyticsPage() {
         <Row label="pieces"            value={ds.length} accent />
         <Row label="pairs"             value={pairs.filter((p) => p.b !== null).length + (hasSolo ? " (+ 1 awaiting partner)" : "")} />
         <Row label="karma threshold" value={threshold.toFixed(4)} accent />
-        <Row label="pairs below threshold" value={pairs.filter((p) => p.belowThreshold).length} />
+        <Row label="pairs liberating on first cessation" value={pairs.filter((p) => p.cycles === 1).length} />
+        <Row label="median cycles to liberation"
+          value={(() => {
+            const c = pairs.map((p) => p.cycles).filter((v): v is number => v !== null).sort((a, b) => a - b);
+            return c.length ? c[Math.floor(c.length / 2)] : "—";
+          })()}
+        />
         <Row label="health index range"
           value={`${Math.min(...pieces.map((p) => p.healthIndex)).toFixed(3)} – ${Math.max(...pieces.map((p) => p.healthIndex)).toFixed(3)}`}
         />
@@ -148,7 +152,7 @@ export default async function AnalyticsPage() {
       {/* Pair karma */}
       <Section title="PAIR KARMA">
         <div style={{ color: "var(--muted)", fontSize: "11px", marginBottom: "12px", fontStyle: "italic" }}>
-          Karma computed from current datasets. Threshold shifts as collection grows — liberation status unknown until cessation.
+          Karma computed from current datasets. Each rebirth clears a share of the burden at the piece&apos;s own kidney filtration rate, so cycles are how many lifespans a pair needs to reach liberation — centuries each. The threshold shifts as the collection grows, so these move too.
         </div>
 
         {/* Header */}
@@ -166,7 +170,7 @@ export default async function AnalyticsPage() {
           <span>PIECE A</span>
           <span>PIECE B</span>
           <span style={{ textAlign: "right" }}>KARMA</span>
-          <span style={{ textAlign: "right" }}>VS THRESHOLD</span>
+          <span style={{ textAlign: "right" }}>TO LIBERATION</span>
         </div>
 
         {pairs.map((pair, idx) => (
@@ -197,13 +201,15 @@ export default async function AnalyticsPage() {
             {/* Status */}
             <span style={{
               textAlign: "right",
-              color: pair.karma !== null
-                ? (pair.belowThreshold ? "var(--foreground)" : "var(--muted)")
-                : "var(--muted)",
+              color: pair.cycles !== null ? "var(--foreground)" : "var(--muted)",
             }}>
-              {pair.karma !== null
-                ? (pair.belowThreshold ? "below threshold" : "above threshold")
-                : "—"}
+              {pair.karma === null
+                ? "—"
+                : pair.cycles === null
+                  ? "beyond reach"
+                  : pair.cycles === 1
+                    ? "1 cycle"
+                    : `${pair.cycles} cycles`}
             </span>
           </div>
         ))}
@@ -229,7 +235,7 @@ export default async function AnalyticsPage() {
           <span>#</span>
           <span>PIECE</span>
           <span style={{ textAlign: "right" }}>KARMA</span>
-          <span style={{ textAlign: "right" }}>VS THRESHOLD</span>
+          <span style={{ textAlign: "right" }}>TO LIBERATION</span>
         </div>
 
         {karmas

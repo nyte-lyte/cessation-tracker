@@ -8,7 +8,6 @@ import {
   computeStaticUniforms,
   lifespanYearsFromHashDigits,
   normalize,
-  type HealthDataSet,
 } from "@/lib/pieceUtils";
 import { PIECE_INSCRIPTIONS } from "@/data/inscriptions";
 import { getAgedDataset, applyCollectionInfluence } from "@/data/decay_logic";
@@ -49,6 +48,10 @@ function guardHueGap(baseDeg: number, candDeg: number, minGapDeg: number, pushSi
 }
 
 function percentile(value: number, sortedArray: number[]): number {
+  // Matches main.js: a collection of one has no ranking to give, and dividing by
+  // length-1 would yield NaN hue/sat/bri. Not reachable while this renders against
+  // the full baked collection, but the engine guards it and these must agree.
+  if (sortedArray.length < 2) return 0.5;
   const rank = sortedArray.filter((v) => v < value).length;
   return rank / (sortedArray.length - 1);
 }
@@ -279,18 +282,56 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
     const sortedQRSValues       = healthDataSets.map((d) => d.ecg.qrsInterval).sort((a, b) => a - b);
     const sortedQRSTAngleValues = healthDataSets.map((d) => Math.abs(d.ecg.rAxis - d.ecg.tAxis)).sort((a, b) => a - b);
 
-    // Beam phases — seeded from HASH (match main.js phaseSeed per beam)
+    // Beam phases — seeded from HASH (match main.js phaseSeed per beam).
+    // CO2 and Ca were hardcoded to 0, which made those two beams breathe in
+    // lockstep across every piece; main.js hash-seeds them like the rest.
     const phases = {
       N:   (HASH / 99) * 2 * Math.PI,
       C:   (HASH / 99) * 1.3 * Math.PI,
       Na:  (HASH / 99 + 0.57) % 1,
       Cl:  (HASH / 99 + 0.11) % 1,
-      CO2: 0,
-      Ca:  0,
+      CO2: (HASH / 99) * 1.1 * Math.PI,
+      Ca:  (HASH / 99) * 0.7 * Math.PI,
     };
 
     const YEARS_PER_SEC = 1 / (365 * 24 * 3600);
+
+    // A piece has been running since it was inscribed, whether or not anyone had
+    // it open. Pre-advance every beam from birth so opening the page finds it
+    // mid-motion at the point any other viewer sees, rather than replaying the
+    // same opening moment on every load. Matches main.js.
+    const secsSinceBirth = Math.max(0, Date.now() / 1000 - inscriptionUnix);
+    {
+      // Same tempo formulas the render loop uses, evaluated against this piece's
+      // own baked dataset. main.js approximates identically: tempo drifts a little
+      // as the dataset ages, and that error is negligible against the alternative
+      // of always starting at the beginning.
+      const d0 = healthDataSets[id];
+      const nrm = (v: number, mn: number, mx: number) => clamp((v - mn) / Math.max(1e-6, mx - mn), 0, 1);
+      const prN   = nrm(d0.ecg.prInterval,  minMaxValues.prInterval.min,  minMaxValues.prInterval.max);
+      const vrN   = nrm(d0.ecg.ventRate,    minMaxValues.ventRate.min,    minMaxValues.ventRate.max);
+      const tAxN  = nrm(d0.ecg.tAxis,       minMaxValues.tAxis.min,       minMaxValues.tAxis.max);
+      const qtN   = nrm(d0.ecg.qtInterval,  minMaxValues.qtInterval.min,  minMaxValues.qtInterval.max);
+
+      const twoPi = (secs: number, tempo: number) => (secs * 2 * Math.PI) / Math.max(1e-3, tempo);
+      phases.N   += twoPi(secsSinceBirth, 10 - 3 * percentile(d0.labs.nitrogen, sortedNitrogen));
+      phases.C   += twoPi(secsSinceBirth, 9 + 6 * prN);
+      phases.CO2 += twoPi(secsSinceBirth, 12 + 8 * percentile(d0.labs.eGFR, sortedEGFR));
+      phases.Ca  += twoPi(secsSinceBirth, 18 + 12 * (1 - tAxN));
+      phases.Na = (phases.Na + secsSinceBirth / Math.max(1e-3, 10 - 5.5 * vrN)) % 1;
+      phases.Cl = (phases.Cl + secsSinceBirth / Math.max(1e-3, 11 - 5.5 * qtN)) % 1;
+    }
+
+    // u_time counts from inscription, not from page load — wrapped for float32
+    // precision. Every u_time coefficient in the shader is a multiple of
+    // 0.01 rad/s, so 200pi seconds advances each term by an exact multiple of
+    // 2pi: phase-continuous, no seam at the wrap. Without the wrap the raw
+    // value is large enough that its float32 ULP exceeds a frame and the motion
+    // freezes then snaps.
+    const U_TIME_WRAP = 200 * Math.PI;
+
     let lastT = performance.now() / 1000;
+    const startedAt = lastT;   // so u_time advances smoothly from secsSinceBirth
 
     // Cache canvas size in physical pixels — updated only by ResizeObserver
     const dpr = () => window.devicePixelRatio || 1;
@@ -326,9 +367,10 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
 
       // Chronological drift + systemic influence — matches main.js activeDataSet
       const activeDs = applyCollectionInfluence(
-        getAgedDataset(id, lifeFraction, healthDataSets),
+        getAgedDataset(id, lifeFraction, healthDataSets, minMaxValues),
         healthDataSets,
-        lifeFraction
+        lifeFraction,
+        minMaxValues
       );
       const { hue: aHue, sat: aSat, bri: aBri } = computeHSBFromStats(activeDs, healthDataSets);
       const aPAxisNorm    = clamp(normalize(activeDs.ecg.pAxis,       minMaxValues.pAxis.min,       minMaxValues.pAxis.max),       0, 1);
@@ -404,7 +446,7 @@ export default function PieceViewer({ id, vertexSrc, fragmentSrc, partnerInherit
       caHue = guardHueGap(activeBaseHueDeg, caHue, 32, +1);
 
       // Set all uniforms
-      if (locs.time)              gl.uniform1f(locs.time, nowSec);
+      if (locs.time)              gl.uniform1f(locs.time, (secsSinceBirth + nowSec - startedAt) % U_TIME_WRAP);
       if (locs.resolution)        gl.uniform2f(locs.resolution, cachedW, cachedH);
       if (locs.glucose)           gl.uniform1f(locs.glucose, aHue);
       if (locs.potassium)         gl.uniform1f(locs.potassium, aSat);
