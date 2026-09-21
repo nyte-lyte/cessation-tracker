@@ -9,22 +9,69 @@ function normalize(val, min, max) {
 const ECG_KEYS = ['ventRate', 'prInterval', 'qrsInterval', 'qtInterval', 'qtcInterval', 'pAxis', 'rAxis', 'tAxis'];
 const LAB_KEYS = ['glucose', 'nitrogen', 'creatinine', 'eGFR', 'sodium', 'potassium', 'chloride', 'carbonDioxide', 'calcium'];
 
+// Is this dataset usable as a member of the collection?
+//
+// The contract the rest of this file relies on: anything that passes here has an
+// `ecg` and a `labs` object, so downstream code may dereference them. Anything that
+// does not is never admitted to the collection at all — see lcRefreshSiblings.
+//
+// This is the boundary, deliberately in one place. A piece whose CBOR metadata
+// carries `dataset: {}` is truthy and used to sail through the old `meta.dataset`
+// check, then throw inside ecgRanks or computeKarma — which does not break that
+// piece, it kills the render for every piece that discovered it.
+//
+// Individual FIELDS are allowed to be missing or junk: computeMinMaxValues and
+// ecgRanks both ignore non-finite values, so a reading that is merely incomplete
+// still contributes everything it got right. Only a dataset with no usable shape
+// at all is refused.
+function isUsableDataset(d) {
+  if (!d || typeof d !== 'object') return false;
+  if (!d.ecg || typeof d.ecg !== 'object') return false;
+  if (!d.labs || typeof d.labs !== 'object') return false;
+  // at least one finite reading somewhere, or it carries no information
+  for (const k of ECG_KEYS) if (typeof d.ecg[k] === 'number' && Number.isFinite(d.ecg[k])) return true;
+  for (const k of LAB_KEYS) if (typeof d.labs[k] === 'number' && Number.isFinite(d.labs[k])) return true;
+  return false;
+}
+
 // Derive min/max ranges fresh from any dataset collection.
-// The collection is a living organism — only the starting datasets are fixed at mint.
+// The collection is a living organism — only the starting datasets are fixed at inscription.
 // Everything derived from them (minMaxValues, percentiles, healthIndex, karma) should
-// be recomputed from the live collection as it grows with new mints.
+// be recomputed from the live collection as it grows with new inscriptions.
 function computeMinMaxValues(allDatasets) {
   const result = {};
   for (const k of ECG_KEYS) result[k] = { min: Infinity, max: -Infinity };
   for (const k of LAB_KEYS) result[k] = { min: Infinity, max: -Infinity };
+  // ONLY real numbers widen a range. This is the collection's immune system.
+  //
+  // These ranges are computed across the WHOLE collection and every piece
+  // normalizes through them, so a single bad field in a single future reading
+  // does not corrupt one piece — it corrupts every piece already on chain, for
+  // ever, with no way to patch the engine. Measured on the real thirty:
+  //   a newcomer missing `glucose`  -> range {NaN, NaN} -> every piece's
+  //                                    normalized glucose is NaN
+  //   a newcomer with glucose: null -> null coerces to 0, range silently becomes
+  //                                    0..160, and piece 0 moves 0.5352 -> 0.7937
+  // Neither raises an error. The second does not even look wrong.
+  //
+  // So skip anything that is not a finite number: a missing key, null, undefined,
+  // NaN, or a string that happens to look numeric. A malformed piece is then
+  // simply absent from the ranking rather than able to redefine it.
+  const consider = (slot, v) => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return;
+    slot.min = Math.min(slot.min, v);
+    slot.max = Math.max(slot.max, v);
+  };
   for (const d of allDatasets) {
-    for (const k of ECG_KEYS) {
-      result[k].min = Math.min(result[k].min, d.ecg[k]);
-      result[k].max = Math.max(result[k].max, d.ecg[k]);
-    }
-    for (const k of LAB_KEYS) {
-      result[k].min = Math.min(result[k].min, d.labs[k]);
-      result[k].max = Math.max(result[k].max, d.labs[k]);
+    for (const k of ECG_KEYS) consider(result[k], d?.ecg?.[k]);
+    for (const k of LAB_KEYS) consider(result[k], d?.labs?.[k]);
+  }
+  // A key no dataset supplied would leave {Infinity, -Infinity}, which normalizes
+  // to NaN. Collapse it instead: min === max makes normalize() return 0.5.
+  for (const k of Object.keys(result)) {
+    if (!Number.isFinite(result[k].min) || !Number.isFinite(result[k].max)) {
+      result[k].min = 0;
+      result[k].max = 0;
     }
   }
   return result;
@@ -71,12 +118,21 @@ function blendDatasets(a, b, minMaxValues) {
 // Karma = accumulated disease burden of a dataset.
 // Higher karma = more cycles before liberation.
 // Uses disease markers weighted toward cardiac and kidney stress.
+// A field that is missing or junk ranks at the midpoint rather than poisoning the
+// sum with a NaN — karma feeds liberation, which decides whether a piece ever stops
+// reanimating, so it must be a number for every input.
+function normOr(v, range) {
+  if (typeof v !== 'number' || !Number.isFinite(v) || !range) return 0.5;
+  const n = normalize(v, range.min, range.max);
+  return Number.isFinite(n) ? n : 0.5;
+}
+
 function computeKarma(dataset, minMaxValues) {
-  const nQTc       = normalize(dataset.ecg.qtcInterval, minMaxValues.qtcInterval.min, minMaxValues.qtcInterval.max);
-  const nCreat     = normalize(dataset.labs.creatinine, minMaxValues.creatinine.min,  minMaxValues.creatinine.max);
-  const nEGFR      = normalize(dataset.labs.eGFR,       minMaxValues.eGFR.min,        minMaxValues.eGFR.max);
-  const nGlucose   = normalize(dataset.labs.glucose,    minMaxValues.glucose.min,     minMaxValues.glucose.max);
-  const nVentRate  = normalize(dataset.ecg.ventRate,    minMaxValues.ventRate.min,    minMaxValues.ventRate.max);
+  const nQTc       = normOr(dataset?.ecg?.qtcInterval, minMaxValues?.qtcInterval);
+  const nCreat     = normOr(dataset?.labs?.creatinine, minMaxValues?.creatinine);
+  const nEGFR      = normOr(dataset?.labs?.eGFR,       minMaxValues?.eGFR);
+  const nGlucose   = normOr(dataset?.labs?.glucose,    minMaxValues?.glucose);
+  const nVentRate  = normOr(dataset?.ecg?.ventRate,    minMaxValues?.ventRate);
   return nQTc * 0.35 + nCreat * 0.25 + (1 - nEGFR) * 0.20 + nGlucose * 0.15 + nVentRate * 0.05;
 }
 
@@ -102,9 +158,7 @@ function computeKarma(dataset, minMaxValues) {
 const KARMA_CLEARANCE_K = 0.05;
 
 function karmaClearanceRate(dataset, minMaxValues) {
-  return KARMA_CLEARANCE_K * normalize(
-    dataset.labs.eGFR, minMaxValues.eGFR.min, minMaxValues.eGFR.max
-  );
+  return KARMA_CLEARANCE_K * normOr(dataset?.labs?.eGFR, minMaxValues?.eGFR);
 }
 
 // Burden remaining after a rebirth: the karma of the piece as it now is, less
@@ -229,4 +283,4 @@ function calculateHealthIndex(data, minMaxValues) {
   );
 }
 
-export { normalize, blendDatasets, computeKarma, computeLiberationThreshold, getAgedDataset, applyCollectionInfluence, calculateHealthIndex, computeMinMaxValues, karmaClearanceRate, remainingKarma, KARMA_CLEARANCE_K };
+export { normalize, isUsableDataset, blendDatasets, computeKarma, computeLiberationThreshold, getAgedDataset, applyCollectionInfluence, calculateHealthIndex, computeMinMaxValues, karmaClearanceRate, remainingKarma, KARMA_CLEARANCE_K };
