@@ -341,6 +341,7 @@ export default async function PiecePage({
           </p>
           <DataRow label="lifespan" value={lifespanYears ? `${lifespanYears.toFixed(1)} years` : "—"} />
           {insc && <DataRow label="inscribed" value={new Date(insc.inscriptionUnix * 1000).toISOString().slice(0, 10)} />}
+          {insc?.sat != null && <DataRow label="sat" value={insc.sat.toLocaleString()} />}
           {insc && <DataRow label="block" value={insc.blockHeight} />}
         </div>
 

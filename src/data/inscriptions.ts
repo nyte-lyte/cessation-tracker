@@ -8,6 +8,10 @@ export interface PieceInscription {
   hashTail: number;        // 0–99
   inscriptionUnix: number; // Unix seconds
   blockHeight: number;
+  // The rare sat this piece lives on. Optional because the v2 rows below predate it;
+  // sync-tracker.mjs fills it for every piece when the v3 run finishes. The sidebar
+  // row simply does not render until it is there.
+  sat?: number;
 }
 
 // Index matches piece index (0–29). null = not yet minted.
