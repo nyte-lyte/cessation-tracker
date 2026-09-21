@@ -152,7 +152,7 @@ export default async function AnalyticsPage() {
       {/* Pair karma */}
       <Section title="PAIR KARMA">
         <div style={{ color: "var(--muted)", fontSize: "11px", marginBottom: "12px", fontStyle: "italic" }}>
-          Karma computed from current datasets. Each rebirth clears a share of the burden at the piece&apos;s own kidney filtration rate, so cycles are how many lifespans a pair needs to reach liberation — centuries each. The threshold shifts as the collection grows, so these move too.
+          Pieces are paired, and each pair carries a shared karma drawn from both of its current readings. A pair is liberated once that karma falls below the collection threshold above. Every death and rebirth clears part of the burden, at a rate set by the kidney function in each piece&apos;s own labs — so TO LIBERATION counts lifespans, not years. Karma and threshold both move as new readings join the collection, which means these figures are a snapshot, not a fixed fate.
         </div>
 
         {/* Header */}
